@@ -1,0 +1,110 @@
+@import url(https://fonts.googleapis.com/css?family=Open+Sans);
+
+html {
+  background-color: #3c3934;
+}
+
+body {
+    padding: 25px;
+    font-family: "Open Sans", sans-serif;
+    padding-bottom: 35px;
+    margin: 30px;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 0px;
+    max-width: 960px;
+    background-color: #c7bcad;
+    box-shadow: 0px 0px 2px rgba(13, 13, 13, 0.3);
+    transition: box-shadow 0.5s ease-out;
+  }
+
+  body:hover {
+    box-shadow: 0px 0px 4px rgba(13, 13, 13, 1);
+  }
+
+.subtle {
+  font-size: 18px;
+  opacity: 0.6;
+}
+
+.submitbutton {
+  font-size: 20px;
+}
+
+.fileselector {
+  font-size: 20px;
+  color: #111;
+}
+
+.dltext {
+  color: #111;
+  text-align: center;
+}
+
+.uploadinterface {
+  width: 490px;
+  display: block;
+  margin-right: auto;
+  margin-left: auto;
+  height: auto;
+}
+
+.sidebar {
+  padding-top: 20px;
+  background-color: #3c3934;
+  position: fixed;
+  top: 0px;
+  left: 0px;
+  height: 100%;
+  width: 10%;
+  min-width: 120px;
+}
+
+.button {
+  background-color: #c7bcad;
+  width: 100%;
+  color: #111;
+  display: inline-block;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  font-size: 20px;
+  transition: background 0.2s ease-in-out;
+}
+
+.button:hover {
+  background-color: #a3a3a3;
+}
+
+.buttontxt {
+  color: #fff;
+  margin: 0px;
+  margin-left: 8px;
+}
+
+.separator {
+  color: #111;
+  width: 100%;
+  display: inline-block;
+  padding-top: 12px;
+  padding-bottom: 4px;
+  font-size: 16px;
+  border: solid 0px #111;
+  border-bottom-width: 1px;
+}
+
+img {
+  display: block;
+  border: solid 5px #2d2d2d;
+  margin-right: auto;
+  margin-left: auto;
+  max-width: 80%;
+  height: auto;
+}
+
+.title {
+  font-family: Tahoma, Verdana, Segoe, sans-serif;
+  font-size: 72px;
+  color: #111;
+  margin-bottom: 10px;
+}
+
