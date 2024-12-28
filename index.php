@@ -45,7 +45,10 @@
 	  <a href="http://paypal.me/esenjin" target="blank">
       <div class="button orangeBG"><p class="buttontxt">Don</p></div>
       </a>
-
+      
+      <a href="gallery.php">
+      <div class="button orangeBG"><p class="buttontxt">Admin</p></div>
+      </a>
 
     </div>
 
