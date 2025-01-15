@@ -603,3 +603,118 @@ footer {
     from { opacity: 1; }
     to { opacity: 0; }
 }
+
+.share-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.share-container h1 {
+    color: var(--color-primary);
+    margin-bottom: var(--spacing-sm);
+    word-break: break-all;
+}
+
+.file-meta {
+    color: var(--color-text-muted);
+    margin-bottom: var(--spacing-lg);
+}
+
+.preview-container {
+    background-color: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius);
+    margin-bottom: var(--spacing-lg);
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.preview-content {
+    max-width: 100%;
+    max-height: 600px;
+}
+
+.text-preview {
+    width: 100%;
+    max-height: 600px;
+    overflow: auto;
+    padding: var(--spacing-md);
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    font-family: monospace;
+    white-space: pre-wrap;
+}
+
+.no-preview {
+    text-align: center;
+    padding: var(--spacing-lg);
+    color: var(--color-text-muted);
+}
+
+.extension-badge {
+    background-color: var(--color-bg-alt);
+    color: var(--color-primary);
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-radius: var(--border-radius);
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: var(--spacing-md);
+}
+
+.share-actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.share-link {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.input-group {
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+.input-group input {
+    flex: 1;
+}
+
+/* Styles responsifs */
+@media (max-width: 768px) {
+    .input-group {
+        flex-direction: column;
+    }
+    
+    .input-group .btn {
+        width: 100%;
+    }
+}
+
+/* Animation de notification */
+.notification {
+    position: fixed;
+    bottom: var(--spacing-lg);
+    right: var(--spacing-lg);
+    background-color: var(--color-success);
+    color: white;
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-radius: var(--border-radius);
+    animation: slideIn 0.3s ease-out, fadeOut 0.3s ease-in 2.7s forwards;
+    z-index: 1000;
+}
+
+@keyframes slideIn {
+    from { transform: translateY(100%); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
