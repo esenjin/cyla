@@ -339,7 +339,7 @@ $files = $fileData['files'];
             <div class="pagination">
                 <?php if ($fileData['currentPage'] > 1): ?>
                     <a href="?page=<?php echo $fileData['currentPage'] - 1; ?>" 
-                       class="pagination-link">&laquo; Précédent</a>
+                       class="pagination-link">&laquo;</a>
                 <?php endif; ?>
 
                 <?php
@@ -366,7 +366,7 @@ $files = $fileData['files'];
 
                 if ($fileData['currentPage'] < $fileData['totalPages']): ?>
                     <a href="?page=<?php echo $fileData['currentPage'] + 1; ?>" 
-                       class="pagination-link">Suivant &raquo;</a>
+                       class="pagination-link">&raquo;</a>
                 <?php endif; ?>
             </div>
         <?php endif; ?>
