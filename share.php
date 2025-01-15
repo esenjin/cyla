@@ -92,7 +92,7 @@ ob_start(); ?>
                                id="share-url" 
                                value="<?php echo Cyla::escape($share_url); ?>" 
                                readonly>
-                        <button class="btn" onclick="copyToClipboard('share-url', 'Lien de partage copié !')">
+                        <button class="btn" onclick="handleCopy('share-url', 'Lien de partage copié !')">
                             Copier
                         </button>
                     </div>
@@ -105,7 +105,7 @@ ob_start(); ?>
                                id="direct-url" 
                                value="<?php echo Cyla::escape($file_url); ?>" 
                                readonly>
-                        <button class="btn" onclick="copyToClipboard('direct-url', 'Lien direct copié !')">
+                        <button class="btn" onclick="handleCopy('direct-url', 'Lien direct copié !')">
                             Copier
                         </button>
                     </div>
@@ -126,7 +126,7 @@ ob_start(); ?>
                                     }
                                ?>" 
                                readonly>
-                        <button class="btn" onclick="copyToClipboard('embed-code', 'Code d\'intégration copié !')">
+                        <button class="btn" onclick="handleCopy('embed-code', 'Code d\'intégration copié !')">
                             Copier
                         </button>
                     </div>
@@ -261,13 +261,17 @@ ob_start(); ?>
 </style>
 
 <script>
-// Fonction pour copier dans le presse-papier avec notification
-function copyToClipboard(elementId, message) {
-    const element = document.getElementById(elementId);
-    element.select();
-    
+// Fonction pour gérer la copie
+async function handleCopy(elementId, message) {
+    const input = document.getElementById(elementId);
+    if (!input) {
+        console.error(`Element with id ${elementId} not found`);
+        return;
+    }
+
     try {
-        document.execCommand('copy');
+        // Utiliser l'API Clipboard moderne
+        await navigator.clipboard.writeText(input.value);
         
         // Créer et afficher la notification
         const notification = document.createElement('div');
@@ -283,9 +287,6 @@ function copyToClipboard(elementId, message) {
         console.error('Erreur lors de la copie :', err);
         alert('Erreur lors de la copie');
     }
-    
-    // Désélectionner le texte
-    element.blur();
 }
 </script>
 <?php endif; ?>
