@@ -69,15 +69,23 @@ nav {
     gap: var(--spacing-md);
 }
 
-.nav-link {
+/* Navigation */
+.nav-link, 
+button.nav-link {
     color: var(--color-text);
     text-decoration: none;
     padding: var(--spacing-sm) var(--spacing-md);
     border-radius: var(--border-radius);
     transition: background-color 0.3s ease;
+    font: inherit; /* Pour que le bouton utilise la même police */
+    border: none;
+    background: none;
+    cursor: pointer;
+    display: inline-block;
 }
 
-.nav-link:hover {
+.nav-link:hover,
+button.nav-link:hover {
     background-color: var(--color-border);
 }
 
@@ -341,5 +349,41 @@ footer {
     
     .file-list {
         grid-template-columns: 1fr;
+    }
+}
+
+/* Styles pour la modale */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.75);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    backdrop-filter: blur(4px);
+}
+
+.modal-container {
+    background-color: var(--color-bg-alt);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius);
+    width: 100%;
+    max-width: 500px;
+    margin: 1rem;
+    animation: modalAppear 0.3s ease-out;
+}
+
+@keyframes modalAppear {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
     }
 }

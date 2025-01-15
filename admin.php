@@ -241,31 +241,6 @@ ob_start(); ?>
     </script>
 
     <div class="card">
-        <h2>Changer le mot de passe</h2>
-        <form method="POST" class="password-form">
-            <input type="hidden" name="csrf_token" value="<?php echo Cyla::generateCSRFToken(); ?>">
-            <input type="hidden" name="action" value="change_password">
-            
-            <div class="form-group">
-                <label for="current_password">Mot de passe actuel</label>
-                <input type="password" id="current_password" name="current_password" required>
-            </div>
-            
-            <div class="form-group">
-                <label for="new_password">Nouveau mot de passe</label>
-                <input type="password" id="new_password" name="new_password" required>
-            </div>
-            
-            <div class="form-group">
-                <label for="confirm_password">Confirmer le nouveau mot de passe</label>
-                <input type="password" id="confirm_password" name="confirm_password" required>
-            </div>
-            
-            <button type="submit" class="btn">Changer le mot de passe</button>
-        </form>
-    </div>
-
-    <div class="card">
         <h2>Fichiers hébergés</h2>
         <?php if (empty($files)): ?>
             <p class="text-muted">Aucun fichier hébergé</p>
@@ -361,7 +336,11 @@ function copyShareLink(url) {
     });
 }
 </script>
-
+<div id="passwordModalRoot"></div>
+<script>
+    window.CSRF_TOKEN = "<?php echo Cyla::generateCSRFToken(); ?>";
+</script>
+<script src="js/password-modal.js"></script>
 <?php
 $content = ob_get_clean();
 require 'layout.php';

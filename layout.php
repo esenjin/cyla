@@ -14,19 +14,27 @@ if (!defined('CYLA_CORE')) {
     <link rel="stylesheet" href="css/style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel/7.22.5/babel.min.js"></script>
 </head>
 <body>
+    <div id="passwordModalRoot"></div>
     <header>
         <nav>
             <div class="nav-brand">
                 <a href="index.php"><?php echo SITE_NAME; ?></a>
             </div>
             <?php if (Cyla::isLoggedIn()): ?>
-            <div class="nav-menu">
-                <a href="admin.php" class="nav-link">Administration</a>
-                <a href="logout.php?csrf_token=<?php echo Cyla::generateCSRFToken(); ?>" class="nav-link">Déconnexion</a>
-            </div>
+                <div class="nav-menu">
+                    <a href="admin.php" class="nav-link">Administration</a>
+                    <button 
+                        type="button" 
+                        id="changePasswordBtn" 
+                        class="nav-link" 
+                        onclick="console.log('Clic natif détecté')"
+                    >
+                        Changer le mot de passe
+                    </button>
+                    <a href="logout.php?csrf_token=<?php echo Cyla::generateCSRFToken(); ?>" class="nav-link">Déconnexion</a>
+                </div>
             <?php endif; ?>
         </nav>
     </header>
