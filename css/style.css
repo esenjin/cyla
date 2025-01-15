@@ -387,3 +387,207 @@ footer {
         transform: scale(1) translateY(0);
     }
 }
+
+/* Styles spécifiques à la page d'administration */
+.admin-container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+}
+
+.admin-container h2 {
+    color: var(--color-primary);
+    margin-bottom: var(--spacing-md);
+}
+
+.help-text {
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+    margin-top: var(--spacing-xs);
+}
+
+.preview-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--color-bg);
+    color: var(--color-text-muted);
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+.file-name {
+    font-weight: bold;
+    word-break: break-all;
+}
+
+.file-meta {
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+    margin: var(--spacing-xs) 0;
+}
+
+.file-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-sm);
+}
+
+
+/* Styles pour la pagination et l'affichage des fichiers */
+.files-header {
+    margin-bottom: var(--spacing-md);
+    color: var(--color-text-muted);
+}
+
+.files-count {
+    font-size: 0.9rem;
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-lg);
+    padding-top: var(--spacing-md);
+    border-top: 1px solid var(--color-border);
+}
+
+.pagination-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2rem;
+    height: 2rem;
+    padding: 0 var(--spacing-sm);
+    color: var(--color-text);
+    text-decoration: none;
+    background-color: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius);
+    transition: all 0.2s ease;
+}
+
+.pagination-link:hover {
+    background-color: var(--color-border);
+}
+
+.pagination-active {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+    color: var(--color-text);
+}
+
+.pagination-ellipsis {
+    color: var(--color-text-muted);
+    padding: 0 var(--spacing-xs);
+}
+
+/* Bouton de suppression */
+.btn-danger {
+    background-color: var(--color-accent);
+    width: 2.5rem;
+    height: 2.5rem;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    line-height: 1;
+}
+
+.btn-danger:hover {
+    background-color: #a85651;
+}
+
+/* Boîte de dialogue de confirmation */
+.confirmation-dialog {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: var(--color-bg-alt);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-lg);
+    max-width: 400px;
+    width: 90%;
+    z-index: 1000;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.confirmation-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+}
+
+.confirmation-dialog h3 {
+    color: var(--color-primary);
+    margin-bottom: var(--spacing-md);
+}
+
+.confirmation-dialog p {
+    margin-bottom: var(--spacing-lg);
+}
+
+.confirmation-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    justify-content: flex-end;
+}
+
+.confirmation-actions .btn {
+    min-width: 100px;
+    padding: var(--spacing-sm) var(--spacing-md);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .pagination {
+        flex-wrap: wrap;
+    }
+
+    .file-actions {
+        flex-wrap: wrap;
+    }
+
+    .btn-danger {
+        width: 100%;
+    }
+}
+
+/* Styles de notification */
+.notification {
+    position: fixed;
+    bottom: var(--spacing-lg);
+    right: var(--spacing-lg);
+    background-color: var(--color-success);
+    color: white;
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-radius: var(--border-radius);
+    animation: slideIn 0.3s ease-out, fadeOut 0.3s ease-in 2.7s forwards;
+    z-index: 1000;
+    pointer-events: none;
+}
+
+.notification.error {
+    background-color: var(--color-error);
+}
+
+@keyframes slideIn {
+    from { transform: translateY(100%); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}

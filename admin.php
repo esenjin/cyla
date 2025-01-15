@@ -240,103 +240,196 @@ ob_start(); ?>
         }
     </script>
 
-    <div class="card">
-        <h2>Fichiers hébergés</h2>
-        <?php if (empty($files)): ?>
-            <p class="text-muted">Aucun fichier hébergé</p>
-        <?php else: ?>
-            <div class="file-list">
-                <?php foreach ($files as $file): ?>
-                    <div class="file-item">
-                        <div class="file-preview">
-                            <?php if ($file['preview_type'] === 'image'): ?>
-                                <img src="fichiers/<?php echo Cyla::escape($file['name']); ?>" alt="<?php echo Cyla::escape($file['name']); ?>">
-                            <?php else: ?>
-                                <div class="preview-placeholder">
-                                    <?php echo strtoupper($file['extension']); ?>
-                                </div>
-                            <?php endif; ?>
-                        </div>
-                        
-                        <div class="file-info">
-                            <p class="file-name"><?php echo Cyla::escape($file['name']); ?></p>
-                            <p class="file-meta">
-                                <?php echo Cyla::escape(round($file['size'] / 1024, 2)); ?> Ko
-                                · <?php echo date('d/m/Y H:i', $file['uploaded']); ?>
-                            </p>
-                            <div class="file-actions">
-                                <a href="share.php?file=<?php echo urlencode($file['name']); ?>" class="btn btn-secondary" target="_blank">Voir</a>
-                                <button class="btn" onclick="copyShareLink('<?php echo SITE_URL; ?>share.php?file=<?php echo urlencode($file['name']); ?>')">Copier le lien</button>
+    <?php
+// Traitement de la suppression de fichier
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'delete_file') {
+    if (!isset($_POST['csrf_token']) || !Cyla::verifyCSRFToken($_POST['csrf_token'])) {
+        header('Location: admin.php?error=' . urlencode('Token de sécurité invalide'));
+        exit;
+    } else if (!isset($_POST['filename'])) {
+        header('Location: admin.php?error=' . urlencode('Nom de fichier manquant'));
+        exit;
+    } else {
+        $result = Cyla::deleteFile($_POST['filename']);
+        if ($result['success']) {
+            header('Location: admin.php?success=' . urlencode('Fichier supprimé avec succès'));
+            exit;
+        } else {
+            header('Location: admin.php?error=' . urlencode($result['error']));
+            exit;
+        }
+    }
+}
+
+// Récupération de la page courante depuis l'URL
+$currentPage = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+$filesPerPage = 20;
+
+// Récupération des fichiers avec pagination
+$fileData = Cyla::listFiles($currentPage, $filesPerPage);
+$files = $fileData['files'];
+?>
+
+<div class="card">
+    <h2>Fichiers hébergés</h2>
+    
+    <?php if (empty($files)): ?>
+        <p class="text-muted">Aucun fichier hébergé</p>
+    <?php else: ?>
+        <div class="files-header">
+            <p class="files-count">
+                <?php 
+                $start = (($fileData['currentPage'] - 1) * $fileData['perPage']) + 1;
+                $end = min($start + count($files) - 1, $fileData['total']);
+                echo "Affichage de $start-$end sur {$fileData['total']} fichiers";
+                ?>
+            </p>
+        </div>
+
+        <div class="file-list">
+            <?php foreach ($files as $file): ?>
+                <div class="file-item">
+                    <div class="file-preview">
+                        <?php if ($file['preview_type'] === 'image'): ?>
+                            <img src="fichiers/<?php echo Cyla::escape($file['name']); ?>" 
+                                 alt="<?php echo Cyla::escape($file['name']); ?>">
+                        <?php else: ?>
+                            <div class="preview-placeholder">
+                                <?php echo strtoupper($file['extension']); ?>
                             </div>
+                        <?php endif; ?>
+                    </div>
+                    
+                    <div class="file-info">
+                        <p class="file-name"><?php echo Cyla::escape($file['name']); ?></p>
+                        <p class="file-meta">
+                            <?php echo Cyla::escape(round($file['size'] / 1024, 2)); ?> Ko
+                            · <?php echo date('d/m/Y H:i', $file['uploaded']); ?>
+                        </p>
+                        <div class="file-actions">
+                            <a href="share.php?file=<?php echo urlencode($file['name']); ?>" 
+                               class="btn btn-secondary" 
+                               target="_blank">Voir</a>
+                            <button class="btn" 
+                                    onclick="copyShareLink('<?php echo SITE_URL; ?>share.php?file=<?php echo urlencode($file['name']); ?>')">
+                                Copier le lien
+                            </button>
+                            <button class="btn btn-danger" 
+                                    onclick="confirmDelete('<?php echo Cyla::escape($file['name']); ?>')">
+                                ×
+                            </button>
                         </div>
                     </div>
-                <?php endforeach; ?>
+                </div>
+                
+                <!-- Formulaire caché pour la suppression -->
+                <form id="deleteForm-<?php echo Cyla::escape($file['name']); ?>" 
+                    action="admin.php"
+                    method="POST" 
+                    style="display: none;">
+                    <input type="hidden" name="action" value="delete_file">
+                    <input type="hidden" name="filename" value="<?php echo Cyla::escape($file['name']); ?>">
+                    <input type="hidden" name="csrf_token" value="<?php echo Cyla::generateCSRFToken(); ?>">
+                </form>
+            <?php endforeach; ?>
+        </div>
+
+        <?php if ($fileData['totalPages'] > 1): ?>
+            <div class="pagination">
+                <?php if ($fileData['currentPage'] > 1): ?>
+                    <a href="?page=<?php echo $fileData['currentPage'] - 1; ?>" 
+                       class="pagination-link">&laquo; Précédent</a>
+                <?php endif; ?>
+
+                <?php
+                // Afficher max 5 pages autour de la page courante
+                $start = max(1, $fileData['currentPage'] - 2);
+                $end = min($fileData['totalPages'], $fileData['currentPage'] + 2);
+
+                if ($start > 1) {
+                    echo '<a href="?page=1" class="pagination-link">1</a>';
+                    if ($start > 2) echo '<span class="pagination-ellipsis">...</span>';
+                }
+
+                for ($i = $start; $i <= $end; $i++) {
+                    $isActive = $i === $fileData['currentPage'];
+                    echo '<a href="?page=' . $i . '" class="pagination-link ' . 
+                         ($isActive ? 'pagination-active' : '') . '">' . $i . '</a>';
+                }
+
+                if ($end < $fileData['totalPages']) {
+                    if ($end < $fileData['totalPages'] - 1) echo '<span class="pagination-ellipsis">...</span>';
+                    echo '<a href="?page=' . $fileData['totalPages'] . 
+                         '" class="pagination-link">' . $fileData['totalPages'] . '</a>';
+                }
+
+                if ($fileData['currentPage'] < $fileData['totalPages']): ?>
+                    <a href="?page=<?php echo $fileData['currentPage'] + 1; ?>" 
+                       class="pagination-link">Suivant &raquo;</a>
+                <?php endif; ?>
             </div>
         <?php endif; ?>
-    </div>
+    <?php endif; ?>
 </div>
 
-<style>
-/* Styles spécifiques à la page d'administration */
-.admin-container {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-lg);
-}
-
-.admin-container h2 {
-    color: var(--color-primary);
-    margin-bottom: var(--spacing-md);
-}
-
-.help-text {
-    font-size: 0.9rem;
-    color: var(--color-text-muted);
-    margin-top: var(--spacing-xs);
-}
-
-.preview-placeholder {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: var(--color-bg);
-    color: var(--color-text-muted);
-    font-size: 2rem;
-    font-weight: bold;
-}
-
-.file-name {
-    font-weight: bold;
-    word-break: break-all;
-}
-
-.file-meta {
-    font-size: 0.9rem;
-    color: var(--color-text-muted);
-    margin: var(--spacing-xs) 0;
-}
-
-.file-actions {
-    display: flex;
-    gap: var(--spacing-sm);
-    margin-top: var(--spacing-sm);
-}
-</style>
-
 <script>
-// Fonction pour copier le lien de partage
 function copyShareLink(url) {
     navigator.clipboard.writeText(url).then(() => {
-        alert('Lien copié dans le presse-papier');
+        // Créer et afficher la notification
+        const notification = document.createElement('div');
+        notification.className = 'notification';
+        notification.textContent = 'Lien copié dans le presse-papier !';
+        document.body.appendChild(notification);
+        
+        // Supprimer la notification après l'animation
+        setTimeout(() => {
+            notification.remove();
+        }, 3000);
     }).catch(err => {
         console.error('Erreur lors de la copie :', err);
-        alert('Erreur lors de la copie du lien');
+        // En cas d'erreur, afficher une notification d'erreur
+        const notification = document.createElement('div');
+        notification.className = 'notification error';
+        notification.textContent = 'Erreur lors de la copie';
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.remove();
+        }, 3000);
     });
 }
+// Fonction de confirmation de suppression
+function confirmDelete(filename) {
+    const overlay = document.createElement('div');
+    overlay.className = 'confirmation-overlay';
+    
+    const dialog = document.createElement('div');
+    dialog.className = 'confirmation-dialog';
+    dialog.innerHTML = `
+        <h3>Confirmer la suppression</h3>
+        <p>Voulez-vous vraiment supprimer le fichier "${filename}" ?</p>
+        <div class="confirmation-actions">
+            <button class="btn btn-secondary" onclick="closeConfirmDialog()">Annuler</button>
+            <button class="btn" onclick="submitDelete('${filename}')">Supprimer</button>
+        </div>
+    `;
+    
+    document.body.appendChild(overlay);
+    document.body.appendChild(dialog);
+}
+
+// Fonction pour fermer la modale
+function closeConfirmDialog() {
+    document.querySelector('.confirmation-overlay')?.remove();
+    document.querySelector('.confirmation-dialog')?.remove();
+}
+
+// Fonction pour soumettre la suppression
+function submitDelete(filename) {
+    document.getElementById('deleteForm-' + filename).submit();
+    closeConfirmDialog();
+}
 </script>
-<div id="passwordModalRoot"></div>
 <script>
     window.CSRF_TOKEN = "<?php echo Cyla::generateCSRFToken(); ?>";
 </script>

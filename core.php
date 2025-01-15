@@ -131,12 +131,30 @@ class Cyla {
     }
 
     /**
-     * Liste les fichiers uploadés
-     * @return array
+     * Liste les fichiers uploadés avec pagination
+     * @param int $page Numéro de la page (commence à 1)
+     * @param int $perPage Nombre d'éléments par page
+     * @return array ['files' => array, 'total' => int, 'totalPages' => int]
      */
-    public static function listFiles() {
+    public static function listFiles($page = 1, $perPage = 20) {
         $files = [];
-        foreach (glob(UPLOAD_DIR . '*') as $file) {
+        $allFiles = glob(UPLOAD_DIR . '*');
+        
+        // Trier les fichiers par date de modification (plus récent en premier)
+        usort($allFiles, function($a, $b) {
+            return filemtime($b) - filemtime($a);
+        });
+        
+        // Calculer la pagination
+        $total = count($allFiles);
+        $totalPages = ceil($total / $perPage);
+        $page = max(1, min($page, $totalPages)); // Garantir que la page est dans les limites
+        $offset = ($page - 1) * $perPage;
+        
+        // Récupérer uniquement les fichiers de la page courante
+        $pageFiles = array_slice($allFiles, $offset, $perPage);
+        
+        foreach ($pageFiles as $file) {
             $info = pathinfo($file);
             $files[] = [
                 'name' => basename($file),
@@ -146,7 +164,41 @@ class Cyla {
                 'preview_type' => getPreviewType($info['extension'])
             ];
         }
-        return $files;
+        
+        return [
+            'files' => $files,
+            'total' => $total,
+            'totalPages' => $totalPages,
+            'currentPage' => $page,
+            'perPage' => $perPage
+        ];
+    }
+    /**
+     * Supprime un fichier
+     * @param string $filename Nom du fichier à supprimer
+     * @return array ['success' => bool, 'error' => string|null]
+     */
+    public static function deleteFile($filename) {
+        $filepath = UPLOAD_DIR . $filename;
+        
+        // Vérifier que le fichier existe et est dans le dossier d'upload
+        if (!file_exists($filepath) || !is_file($filepath)) {
+            return ['success' => false, 'error' => 'Fichier introuvable'];
+        }
+        
+        // Vérifier que le fichier est bien dans le dossier d'upload
+        $realpath = realpath($filepath);
+        $uploadDir = realpath(UPLOAD_DIR);
+        if (strpos($realpath, $uploadDir) !== 0) {
+            return ['success' => false, 'error' => 'Chemin de fichier non autorisé'];
+        }
+        
+        // Supprimer le fichier
+        if (unlink($filepath)) {
+            return ['success' => true];
+        } else {
+            return ['success' => false, 'error' => 'Erreur lors de la suppression du fichier'];
+        }
     }
 }
 
