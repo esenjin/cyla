@@ -23,27 +23,47 @@ if (!isset($_GET['file'])) {
             break;
         default:
             $basePath = UPLOAD_DIR;
+            $path = 'fichiers/'; // Assurer que le path par défaut est correct
     }
     
     $filepath = $basePath . $filename;
     
-    // Vérifier si le fichier existe
-    if (!file_exists($filepath)) {
+    // Vérifier que le fichier existe et est un fichier régulier
+    if (!file_exists($filepath) || !is_file($filepath)) {
         $error = 'Fichier introuvable';
     } else {
-        // Récupérer les informations du fichier
-        $file_info = [
-            'name' => $filename,
-            'size' => filesize($filepath),
-            'extension' => strtolower(pathinfo($filename, PATHINFO_EXTENSION)),
-            'preview_type' => getPreviewType(pathinfo($filename, PATHINFO_EXTENSION))
-        ];
+        // Vérifier que le chemin est sécurisé
+        $realpath = realpath($filepath);
+        $allowed = false;
+        
+        if (strpos($realpath, realpath(UPLOAD_DIR)) === 0) {
+            $allowed = true;
+        } else {
+            foreach (LEGACY_UPLOAD_DIRS as $dir) {
+                if (strpos($realpath, realpath($dir)) === 0) {
+                    $allowed = true;
+                    break;
+                }
+            }
+        }
+        
+        if (!$allowed) {
+            $error = 'Accès non autorisé';
+        } else {
+            // Récupérer les informations du fichier
+            $file_info = [
+                'name' => $filename,
+                'size' => filesize($filepath),
+                'extension' => strtolower(pathinfo($filename, PATHINFO_EXTENSION)),
+                'preview_type' => getPreviewType(pathinfo($filename, PATHINFO_EXTENSION))
+            ];
+        }
     }
 }
 
-// Construction de l'URL absolue du fichier
-$file_url = SITE_URL . 'fichiers/' . ($file_info ? rawurlencode($file_info['name']) : '');
-$share_url = SITE_URL . 'share.php?file=' . ($file_info ? rawurlencode($file_info['name']) : '');
+// Construction des URLs
+$file_url = SITE_URL . $path . ($file_info ? rawurlencode($file_info['name']) : '');
+$share_url = SITE_URL . 'share.php?file=' . ($file_info ? rawurlencode($file_info['name']) : '') . '&path=' . urlencode($path);
 
 // Contenu de la page
 $pageTitle = $file_info ? $file_info['name'] : 'Fichier introuvable';
@@ -86,8 +106,13 @@ ob_start(); ?>
                     </audio>
                 <?php elseif ($file_info['preview_type'] === 'text'): ?>
                     <pre class="text-preview"><?php 
+                        // Lire et afficher le contenu du fichier texte de manière sécurisée
                         $content = file_get_contents($filepath);
-                        echo Cyla::escape($content);
+                        if ($content !== false) {
+                            echo Cyla::escape($content);
+                        } else {
+                            echo "Erreur lors de la lecture du fichier";
+                        }
                     ?></pre>
                 <?php else: ?>
                     <div class="no-preview">
