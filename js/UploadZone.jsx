@@ -1,25 +1,16 @@
-import React, { useState, useRef } from 'react';
-import { X, Upload, CheckCircle, AlertCircle } from 'lucide-react';
+import React, { useState, useRef, useCallback } from 'react';
+import { X, Upload, CheckCircle, AlertCircle, Loader } from 'lucide-react';
 
 const UploadZone = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [files, setFiles] = useState([]);
   const fileInputRef = useRef(null);
 
-  const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100 Mo
-  const ALLOWED_EXTENSIONS = ['png', 'jpg', 'jpeg', 'gif', 'webm', 'mp4', 'wmv', 'mp3', 'flac', 'ogg', 'zip', 'css', 'pdf', 'rar', 'm3u', 'm3u8', 'txt'];
+  const MAX_FILES = 10; // Limite stricte à 10 fichiers
+  const MAX_FILE_SIZE = 100 * 1024 * 1024;
+  const ALLOWED_EXTENSIONS = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'webm', 'mp4', 'wmv', 'mp3', 'flac', 'ogg', 'zip', 'css', 'pdf', 'rar', 'm3u', 'm3u8', 'txt'];
 
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = (e) => {
-    e.preventDefault();
-    setIsDragging(false);
-  };
-
-  const validateFile = (file) => {
+  const validateFile = useCallback((file) => {
     const extension = file.name.split('.').pop().toLowerCase();
     if (!ALLOWED_EXTENSIONS.includes(extension)) {
       return { valid: false, error: `Extension .${extension} non autorisée` };
@@ -28,95 +19,86 @@ const UploadZone = () => {
       return { valid: false, error: 'Fichier trop volumineux (max 100 Mo)' };
     }
     return { valid: true, error: null };
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    setIsDragging(false);
-    
-    const droppedFiles = Array.from(e.dataTransfer.files);
-    addFiles(droppedFiles);
-  };
-
-  const handleFileSelect = (e) => {
-    const selectedFiles = Array.from(e.target.files);
-    addFiles(selectedFiles);
-  };
-
-  const addFiles = (newFiles) => {
-    const processedFiles = newFiles.map(file => {
-      const validation = validateFile(file);
-      return {
-        file,
-        id: Math.random().toString(36).substring(7),
-        status: validation.valid ? 'pending' : 'error',
-        error: validation.error,
-        progress: 0
-      };
-    });
-
-    setFiles(currentFiles => [...currentFiles, ...processedFiles]);
-  };
-
-  const removeFile = (fileId) => {
-    setFiles(files => files.filter(f => f.id !== fileId));
-  };
+  }, []);
 
   const uploadFile = async (fileInfo) => {
-    const formData = new FormData();
-    formData.append('file', fileInfo.file);
-    formData.append('action', 'upload');
-    
     try {
-      // Simuler un upload progressif pour la démo
-      await new Promise(resolve => {
-        let progress = 0;
-        const interval = setInterval(() => {
-          progress += 10;
-          setFiles(files => 
-            files.map(f => 
-              f.id === fileInfo.id 
-                ? { ...f, progress, status: progress === 100 ? 'complete' : 'uploading' }
-                : f
-            )
-          );
-          if (progress >= 100) {
-            clearInterval(interval);
-            resolve();
-          }
-        }, 500);
+      const formData = new FormData();
+      formData.append('file', fileInfo.file);
+      formData.append('csrf_token', document.querySelector('input[name="csrf_token"]')?.value || '');
+
+      // Mettre le statut en uploading
+      setFiles(files =>
+        files.map(f =>
+          f.id === fileInfo.id ? { ...f, status: 'uploading' } : f
+        )
+      );
+
+      const response = await fetch('api.php', {
+        method: 'POST',
+        body: formData
       });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Erreur lors du téléversement');
+      }
+
+      setFiles(files => 
+        files.map(f => 
+          f.id === fileInfo.id ? { ...f, status: 'complete' } : f
+        )
+      );
     } catch (error) {
       setFiles(files =>
         files.map(f =>
           f.id === fileInfo.id
-            ? { ...f, status: 'error', error: 'Erreur lors du téléversement' }
+            ? { ...f, status: 'error', error: error.message }
             : f
         )
       );
     }
   };
 
-  const uploadAllFiles = () => {
-    const pendingFiles = files.filter(f => f.status === 'pending');
-    pendingFiles.forEach(uploadFile);
+  const handleFiles = (newFiles) => {
+    // Vérifier si on n'a pas déjà atteint la limite
+    if (files.length >= MAX_FILES) {
+      alert(`Vous pouvez téléverser uniquement ${MAX_FILES} fichiers à la fois`);
+      return;
+    }
+
+    // Calculer combien de fichiers on peut encore ajouter
+    const remainingSlots = MAX_FILES - files.length;
+    const filesToAdd = Array.from(newFiles).slice(0, remainingSlots);
+
+    if (filesToAdd.length < newFiles.length) {
+      alert(`Seuls les ${remainingSlots} premiers fichiers seront traités. Maximum ${MAX_FILES} fichiers à la fois.`);
+    }
+
+    const processedFiles = filesToAdd.map(file => ({
+      file,
+      id: Math.random().toString(36).substring(7),
+      status: validateFile(file).valid ? 'pending' : 'error',
+      error: validateFile(file).error
+    }));
+
+    setFiles(current => [...current, ...processedFiles]);
+
+    // Lancer l'upload pour chaque fichier valide
+    processedFiles
+      .filter(f => f.status === 'pending')
+      .forEach(uploadFile);
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'complete': return 'text-green-500';
-      case 'error': return 'text-red-500';
-      case 'uploading': return 'text-blue-500';
-      default: return 'text-gray-500';
-    }
-  };
+  const handleDrop = useCallback((e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    handleFiles(e.dataTransfer.files);
+  }, []);
 
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case 'complete': return <CheckCircle className="w-5 h-5" />;
-      case 'error': return <AlertCircle className="w-5 h-5" />;
-      default: return null;
-    }
+  const removeFile = (id) => {
+    setFiles(files => files.filter(f => f.id !== id));
   };
 
   return (
@@ -125,8 +107,14 @@ const UploadZone = () => {
         className={`relative border-2 border-dashed rounded-lg p-8 text-center mb-4 transition-colors
           ${isDragging ? 'border-primary-500 bg-primary-50' : 'border-gray-600'}
           hover:border-primary-500`}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
+        onDragOver={e => {
+          e.preventDefault();
+          setIsDragging(true);
+        }}
+        onDragLeave={e => {
+          e.preventDefault();
+          setIsDragging(false);
+        }}
         onDrop={handleDrop}
         onClick={() => fileInputRef.current?.click()}
       >
@@ -134,7 +122,7 @@ const UploadZone = () => {
           ref={fileInputRef}
           type="file"
           multiple
-          onChange={handleFileSelect}
+          onChange={e => handleFiles(e.target.files)}
           className="hidden"
           accept={ALLOWED_EXTENSIONS.map(ext => `.${ext}`).join(',')}
         />
@@ -147,20 +135,16 @@ const UploadZone = () => {
           ou cliquez pour sélectionner des fichiers
         </p>
         <p className="text-xs text-gray-400 mt-2">
-          Max 100 Mo par fichier · {ALLOWED_EXTENSIONS.join(', ')}
+          Maximum {MAX_FILES} fichiers à la fois · 100 Mo par fichier
+          <br />
+          Extensions : {ALLOWED_EXTENSIONS.join(', ')}
         </p>
       </div>
 
       {files.length > 0 && (
         <div className="border border-gray-700 rounded-lg overflow-hidden">
-          <div className="p-4 bg-gray-800 border-b border-gray-700 flex justify-between items-center">
-            <h3 className="font-medium">Files ({files.length})</h3>
-            <button
-              onClick={uploadAllFiles}
-              className="btn btn-sm bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded"
-            >
-              Tout téléverser
-            </button>
+          <div className="p-4 bg-gray-800 border-b border-gray-700">
+            <h3 className="font-medium">Fichiers ({files.length}/{MAX_FILES})</h3>
           </div>
 
           <div className="divide-y divide-gray-700">
@@ -176,22 +160,20 @@ const UploadZone = () => {
                   )}
                 </div>
 
-                {fileInfo.status === 'uploading' && (
-                  <div className="w-32 h-2 bg-gray-700 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-blue-500 transition-all duration-300"
-                      style={{ width: `${fileInfo.progress}%` }}
-                    />
-                  </div>
-                )}
-
-                <div className={getStatusColor(fileInfo.status)}>
-                  {getStatusIcon(fileInfo.status)}
+                <div className={`
+                  ${fileInfo.status === 'complete' ? 'text-green-500' : ''}
+                  ${fileInfo.status === 'error' ? 'text-red-500' : ''}
+                  ${fileInfo.status === 'uploading' ? 'text-blue-500' : ''}
+                `}>
+                  {fileInfo.status === 'complete' && <CheckCircle className="w-5 h-5" />}
+                  {fileInfo.status === 'error' && <AlertCircle className="w-5 h-5" />}
+                  {fileInfo.status === 'uploading' && <Loader className="w-5 h-5 animate-spin" />}
                 </div>
 
                 <button
                   onClick={() => removeFile(fileInfo.id)}
                   className="p-1 hover:bg-gray-700 rounded"
+                  title={fileInfo.status === 'uploading' ? 'Annuler' : 'Supprimer'}
                 >
                   <X className="w-5 h-5" />
                 </button>
