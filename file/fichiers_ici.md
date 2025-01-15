@@ -1,1 +1,0 @@
-Les fichiers seront stockés dans ce dossier.
