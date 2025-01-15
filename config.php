@@ -11,6 +11,10 @@ define('SITE_VERSION', '3.0.1');
 define('SITE_URL', 'https://concepts.esenjin.xyz/cyla/');
 
 // Files configuration
+define('LEGACY_UPLOAD_DIRS', [
+    __DIR__ . '/v1/img/fichiers/',
+    __DIR__ . '/v2/file/'
+]);
 define('UPLOAD_DIR', __DIR__ . '/fichiers/');
 define('MAX_FILE_SIZE', 100 * 1024 * 1024); // 100 Mo en octets
 define('ALLOWED_EXTENSIONS', [

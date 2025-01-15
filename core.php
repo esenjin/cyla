@@ -138,7 +138,17 @@ class Cyla {
      */
     public static function listFiles($page = 1, $perPage = 20) {
         $files = [];
-        $allFiles = glob(UPLOAD_DIR . '*');
+        $allFiles = [];
+        
+        // Ajouter les fichiers du dossier principal
+        $allFiles = array_merge($allFiles, glob(UPLOAD_DIR . '*'));
+        
+        // Ajouter les fichiers des dossiers hérités
+        foreach (LEGACY_UPLOAD_DIRS as $dir) {
+            if (is_dir($dir)) {
+                $allFiles = array_merge($allFiles, glob($dir . '*'));
+            }
+        }
         
         // Trier les fichiers par date de modification (plus récent en premier)
         usort($allFiles, function($a, $b) {
@@ -148,7 +158,7 @@ class Cyla {
         // Calculer la pagination
         $total = count($allFiles);
         $totalPages = ceil($total / $perPage);
-        $page = max(1, min($page, $totalPages)); // Garantir que la page est dans les limites
+        $page = max(1, min($page, $totalPages));
         $offset = ($page - 1) * $perPage;
         
         // Récupérer uniquement les fichiers de la page courante
@@ -156,12 +166,24 @@ class Cyla {
         
         foreach ($pageFiles as $file) {
             $info = pathinfo($file);
+            $relativePath = '';
+            
+            // Déterminer le chemin relatif selon le dossier
+            if (strpos($file, UPLOAD_DIR) === 0) {
+                $relativePath = 'fichiers/';
+            } elseif (strpos($file, __DIR__ . '/v1/img/fichiers/') === 0) {
+                $relativePath = 'v1/img/fichiers/';
+            } elseif (strpos($file, __DIR__ . '/v2/file/') === 0) {
+                $relativePath = 'v2/file/';
+            }
+            
             $files[] = [
                 'name' => basename($file),
                 'size' => filesize($file),
-                'extension' => strtolower($info['extension']),
+                'extension' => strtolower($info['extension'] ?? ''),
                 'uploaded' => filemtime($file),
-                'preview_type' => getPreviewType($info['extension'])
+                'preview_type' => getPreviewType($info['extension'] ?? ''),
+                'path' => $relativePath // Ajout du chemin relatif
             ];
         }
         
@@ -173,23 +195,50 @@ class Cyla {
             'perPage' => $perPage
         ];
     }
+
     /**
      * Supprime un fichier
      * @param string $filename Nom du fichier à supprimer
+     * @param string $path Chemin relatif du fichier
      * @return array ['success' => bool, 'error' => string|null]
      */
-    public static function deleteFile($filename) {
-        $filepath = UPLOAD_DIR . $filename;
+    public static function deleteFile($filename, $path = 'fichiers/') {
+        // Déterminer le chemin complet selon le dossier
+        $basePath = '';
+        switch ($path) {
+            case 'v1/img/fichiers/':
+                $basePath = __DIR__ . '/v1/img/fichiers/';
+                break;
+            case 'v2/file/':
+                $basePath = __DIR__ . '/v2/file/';
+                break;
+            default:
+                $basePath = UPLOAD_DIR;
+        }
         
-        // Vérifier que le fichier existe et est dans le dossier d'upload
+        $filepath = $basePath . $filename;
+        
+        // Vérifier que le fichier existe et est dans le bon dossier
         if (!file_exists($filepath) || !is_file($filepath)) {
             return ['success' => false, 'error' => 'Fichier introuvable'];
         }
         
-        // Vérifier que le fichier est bien dans le dossier d'upload
+        // Vérifier que le fichier est bien dans un des dossiers autorisés
         $realpath = realpath($filepath);
-        $uploadDir = realpath(UPLOAD_DIR);
-        if (strpos($realpath, $uploadDir) !== 0) {
+        $allowed = false;
+        
+        if (strpos($realpath, realpath(UPLOAD_DIR)) === 0) {
+            $allowed = true;
+        } else {
+            foreach (LEGACY_UPLOAD_DIRS as $dir) {
+                if (strpos($realpath, realpath($dir)) === 0) {
+                    $allowed = true;
+                    break;
+                }
+            }
+        }
+        
+        if (!$allowed) {
             return ['success' => false, 'error' => 'Chemin de fichier non autorisé'];
         }
         

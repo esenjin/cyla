@@ -10,7 +10,22 @@ if (!isset($_GET['file'])) {
     $error = 'Aucun fichier spécifié';
 } else {
     $filename = $_GET['file'];
-    $filepath = UPLOAD_DIR . $filename;
+    $path = $_GET['path'] ?? 'fichiers/';
+    
+    // Déterminer le chemin complet selon le dossier
+    $basePath = '';
+    switch ($path) {
+        case 'v1/img/fichiers/':
+            $basePath = __DIR__ . '/v1/img/fichiers/';
+            break;
+        case 'v2/file/':
+            $basePath = __DIR__ . '/v2/file/';
+            break;
+        default:
+            $basePath = UPLOAD_DIR;
+    }
+    
+    $filepath = $basePath . $filename;
     
     // Vérifier si le fichier existe
     if (!file_exists($filepath)) {

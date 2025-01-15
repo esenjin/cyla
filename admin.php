@@ -289,50 +289,51 @@ $files = $fileData['files'];
         <div class="file-list">
             <?php foreach ($files as $file): ?>
                 <div class="file-item">
-                    <div class="file-preview">
-                        <?php if ($file['preview_type'] === 'image'): ?>
-                            <img src="fichiers/<?php echo Cyla::escape($file['name']); ?>" 
-                                 alt="<?php echo Cyla::escape($file['name']); ?>">
-                        <?php else: ?>
-                            <div class="preview-placeholder">
-                                <?php echo strtoupper($file['extension']); ?>
-                            </div>
-                        <?php endif; ?>
-                    </div>
-                    
-                    <div class="file-info">
-                        <p class="file-name"><?php echo Cyla::escape($file['name']); ?></p>
-                        <p class="file-meta">
-                            <?php echo Cyla::escape(round($file['size'] / 1024, 2)); ?> Ko
-                            · <?php echo date('d/m/Y H:i', $file['uploaded']); ?>
-                        </p>
-                        <div class="file-actions">
-                            <a href="share.php?file=<?php echo urlencode($file['name']); ?>" 
-                               class="btn btn-secondary" 
-                               target="_blank">Voir</a>
-                            <button class="btn" 
-                                    onclick="copyShareLink('<?php echo SITE_URL; ?>share.php?file=<?php echo urlencode($file['name']); ?>')">
-                                Copier le lien
-                            </button>
-                            <button class="btn btn-danger" 
-                                    onclick="confirmDelete('<?php echo Cyla::escape($file['name']); ?>')">
-                                ×
-                            </button>
-                        </div>
-                    </div>
+        <div class="file-preview">
+            <?php if ($file['preview_type'] === 'image'): ?>
+                <img src="<?php echo $file['path'] . Cyla::escape($file['name']); ?>" 
+                     alt="<?php echo Cyla::escape($file['name']); ?>">
+            <?php else: ?>
+                <div class="preview-placeholder">
+                    <?php echo strtoupper($file['extension']); ?>
                 </div>
-                
-                <!-- Formulaire caché pour la suppression -->
-                <form id="deleteForm-<?php echo Cyla::escape($file['name']); ?>" 
-                    action="admin.php"
-                    method="POST" 
-                    style="display: none;">
-                    <input type="hidden" name="action" value="delete_file">
-                    <input type="hidden" name="filename" value="<?php echo Cyla::escape($file['name']); ?>">
-                    <input type="hidden" name="csrf_token" value="<?php echo Cyla::generateCSRFToken(); ?>">
-                </form>
-            <?php endforeach; ?>
+            <?php endif; ?>
         </div>
+        
+        <div class="file-info">
+            <p class="file-name"><?php echo Cyla::escape($file['name']); ?></p>
+            <p class="file-meta">
+                <?php echo Cyla::escape(round($file['size'] / 1024, 2)); ?> Ko
+                · <?php echo date('d/m/Y H:i', $file['uploaded']); ?>
+                · <?php echo $file['path']; ?>
+            </p>
+            <div class="file-actions">
+                <a href="share.php?file=<?php echo urlencode($file['name']); ?>&path=<?php echo urlencode($file['path']); ?>" 
+                   class="btn btn-secondary" 
+                   target="_blank">Voir</a>
+                <button class="btn" 
+                        onclick="copyShareLink('<?php echo SITE_URL; ?>share.php?file=<?php echo urlencode($file['name']); ?>&path=<?php echo urlencode($file['path']); ?>')">
+                    Copier le lien
+                </button>
+                <button class="btn btn-danger" 
+                        onclick="confirmDelete('<?php echo Cyla::escape($file['name']); ?>', '<?php echo Cyla::escape($file['path']); ?>')">
+                    ×
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Formulaire caché pour la suppression -->
+    <form id="deleteForm-<?php echo Cyla::escape($file['name']); ?>" 
+          action="admin.php"
+          method="POST" 
+          style="display: none;">
+        <input type="hidden" name="action" value="delete_file">
+        <input type="hidden" name="filename" value="<?php echo Cyla::escape($file['name']); ?>">
+        <input type="hidden" name="path" value="<?php echo Cyla::escape($file['path']); ?>">
+        <input type="hidden" name="csrf_token" value="<?php echo Cyla::generateCSRFToken(); ?>">
+    </form>
+<?php endforeach; ?>
 
         <?php if ($fileData['totalPages'] > 1): ?>
             <div class="pagination">
