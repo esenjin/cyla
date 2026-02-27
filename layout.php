@@ -14,6 +14,13 @@ if (!defined('CYLA_CORE')) {
     <link rel="stylesheet" href="css/style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <?php if (isset($file_info) && $file_info['preview_type'] === 'image'): ?>
+        <meta property="og:title" content="<?php echo Cyla::escape($file_info['name']); ?>">
+        <meta property="og:description" content="Fichier hébergé sur <?php echo SITE_NAME; ?>">
+        <meta property="og:image" content="<?php echo Cyla::escape($file_url); ?>">
+        <meta property="og:url" content="<?php echo Cyla::escape($share_url); ?>">
+        <meta property="og:type" content="website">
+    <?php endif; ?>
 </head>
 <body>
     <div id="passwordModalRoot"></div>

@@ -112,6 +112,7 @@ ob_start(); ?>
                 </p>
                 <p class="upload-limit">
                     Taille maximale : 100 Mo<br>
+                    Limite simultanée : 10 fichiers<br>
                     Extensions : <?php echo implode(', ', ALLOWED_EXTENSIONS); ?>
                 </p>
             </div>
@@ -178,6 +179,12 @@ ob_start(); ?>
 
         function handleFiles(e) {
             const files = Array.from(e.target.files);
+
+            // Vérification de la limite de fichiers
+            if (files.length > 10) {
+                alert('Vous ne pouvez pas uploader plus de 10 fichiers à la fois.');
+                return;
+            }
             
             // Vider la liste précédente
             fileList.innerHTML = '';
@@ -230,6 +237,9 @@ ob_start(); ?>
                 
                 if (result.success) {
                     element.classList.add('file-item-success');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2500);
                 } else {
                     element.classList.add('file-item-error');
                 }
@@ -263,7 +273,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
 // Récupération de la page courante depuis l'URL
 $currentPage = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
-$filesPerPage = 20;
+$filesPerPage = isset($_GET['perPage']) ? intval($_GET['perPage']) : 24;
+$filesPerPage = in_array($filesPerPage, [24, 48, 96]) ? $filesPerPage : 24;
 
 // Récupération des fichiers avec pagination
 $fileData = Cyla::listFiles($currentPage, $filesPerPage);
@@ -284,6 +295,15 @@ $files = $fileData['files'];
                 echo "Affichage de $start-$end sur {$fileData['total']} fichiers";
                 ?>
             </p>
+        </div>
+
+        <div class="files-per-page-selector">
+            <label for="filesPerPage">Afficher par page :</label>
+            <select id="filesPerPage" onchange="changeFilesPerPage(this.value)">
+                <option value="24" <?php echo ($filesPerPage == 24) ? 'selected' : ''; ?>>24</option>
+                <option value="48" <?php echo ($filesPerPage == 48) ? 'selected' : ''; ?>>48</option>
+                <option value="96" <?php echo ($filesPerPage == 96) ? 'selected' : ''; ?>>96</option>
+            </select>
         </div>
 
         <div class="file-list">
@@ -308,16 +328,32 @@ $files = $fileData['files'];
                 · <?php echo $file['path']; ?>
             </p>
             <div class="file-actions">
-                <a href="share.php?file=<?php echo urlencode($file['name']); ?>&path=<?php echo urlencode($file['path']); ?>" 
-                   class="btn btn-secondary" 
-                   target="_blank">Voir</a>
-                <button class="btn" 
+                <a href="share.php?file=<?php echo urlencode($file['name']); ?>&path=<?php echo urlencode($file['path']); ?>"
+                class="btn btn-secondary" title="Voir" target="_blank">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                </a>
+                <button class="btn" title="Copier le lien de partage"
                         onclick="copyShareLink('<?php echo SITE_URL; ?>share.php?file=<?php echo urlencode($file['name']); ?>&path=<?php echo urlencode($file['path']); ?>')">
-                    Copier le lien
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                    </svg>
                 </button>
-                <button class="btn btn-danger" 
+                <button class="btn" title="Copier l'URL directe"
+                        onclick="copyDirectLink('<?php echo SITE_URL . $file['path'] . urlencode($file['name']); ?>')">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                    </svg>
+                </button>
+                <button class="btn btn-danger" title="Supprimer"
                         onclick="confirmDelete('<?php echo Cyla::escape($file['name']); ?>', '<?php echo Cyla::escape($file['path']); ?>')">
-                    ×
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
                 </button>
             </div>
         </div>
@@ -429,6 +465,24 @@ function closeConfirmDialog() {
 function submitDelete(filename) {
     document.getElementById('deleteForm-' + filename).submit();
     closeConfirmDialog();
+}
+
+// Fonction pour changer le nombre de fichiers affichés par page
+function changeFilesPerPage(perPage) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('perPage', perPage);
+    window.location.href = url.toString();
+}
+
+// Fonction pour copier l'URL directe
+function copyDirectLink(url) {
+    navigator.clipboard.writeText(url).then(() => {
+        const notification = document.createElement('div');
+        notification.className = 'notification';
+        notification.textContent = 'URL directe copiée !';
+        document.body.appendChild(notification);
+        setTimeout(() => notification.remove(), 3000);
+    });
 }
 </script>
 <script>

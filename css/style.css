@@ -490,6 +490,12 @@ footer {
     user-select: none;
 }
 
+#filesPerPage {
+  background-color: var(--color-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+}
+
 /* Bouton de suppression */
 .btn-danger {
     background-color: var(--color-accent);

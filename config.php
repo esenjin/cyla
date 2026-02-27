@@ -7,7 +7,7 @@ if (!defined('CYLA_CORE')) {
 
 // Site configuration
 define('SITE_NAME', 'Cyla');
-define('SITE_VERSION', '3.0.2');
+define('SITE_VERSION', '3.0.3');
 define('SITE_URL', 'https://concepts.esenjin.xyz/cyla/');
 
 // Files configuration
@@ -19,7 +19,7 @@ define('UPLOAD_DIR', __DIR__ . '/fichiers/');
 define('MAX_FILE_SIZE', 100 * 1024 * 1024); // 100 Mo en octets
 define('ALLOWED_EXTENSIONS', [
     'png', 'jpg', 'jpeg', 'gif', 'webm', 'mp4', 'wmv',
-    'mp3', 'flac', 'ogg', 'zip', 'css', 'pdf',
+    'mp3', 'flac', 'ogg', 'zip', 'css', 'pdf', 'webp',
     'zip', 'rar', 'm3u', 'm3u8', 'txt'
 ]);
 
