@@ -63,7 +63,7 @@ if (!defined('CYLA_CORE')) {
     </main>
 
     <footer>
-        <p>&copy; <?php echo date('Y'); ?> <?php echo SITE_NAME; ?> - Version <?php echo SITE_VERSION; ?></p>
+        <p>&copy; <?php echo date('Y'); ?> <?php echo SITE_NAME; ?> - Version <a href="https://git.crystalyx.net/Esenjin_Asakha/cyla/releases" target="_blank"><?php echo SITE_VERSION; ?></a></p>
     </footer>
 
     <script src="js/main.js"></script>
