@@ -2,10 +2,8 @@
 define('CYLA_CORE', true);
 require_once 'core.php';
 
-// Augmenter la limite de temps d'exécution pour les uploads multiples
-set_time_limit(300); // 5 minutes
+set_time_limit(300);
 
-// Vérifier si l'utilisateur est connecté
 if (!Cyla::isLoggedIn()) {
     header('Content-Type: application/json');
     http_response_code(401);
@@ -13,20 +11,21 @@ if (!Cyla::isLoggedIn()) {
     exit;
 }
 
-// Vérifier le token CSRF
 if (!isset($_POST['csrf_token']) || !Cyla::verifyCSRFToken($_POST['csrf_token'])) {
-    header('Content-Type: application/json');
-    http_response_code(403);
-    echo json_encode(['error' => 'Token CSRF invalide']);
-    exit;
+    // Pour les requêtes GET avec token dans l'URL (ex: suppression de groupe)
+    if (!isset($_GET['csrf_token']) || !Cyla::verifyCSRFToken($_GET['csrf_token'])) {
+        header('Content-Type: application/json');
+        http_response_code(403);
+        echo json_encode(['error' => 'Token CSRF invalide']);
+        exit;
+    }
 }
 
-// Gérer l'upload de fichier
+header('Content-Type: application/json');
+
+// === Upload de fichier ===
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['file'])) {
-    header('Content-Type: application/json');
-    
     try {
-        // Vérification de l'espace disque disponible
         $uploadDir = UPLOAD_DIR;
         $freeSpace = disk_free_space($uploadDir);
         if ($freeSpace < $_FILES['file']['size']) {
@@ -40,16 +39,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['file'])) {
 
         $filename = Cyla::generateUniqueFilename($_FILES['file']['name']);
         $destination = $uploadDir . $filename;
-        
-        // Upload avec gestion de la mémoire
+
         if (!move_uploaded_file($_FILES['file']['tmp_name'], $destination)) {
             throw new Exception('Erreur lors du déplacement du fichier');
         }
 
-        // Vérifier l'intégrité du fichier
         if (!file_exists($destination) || filesize($destination) !== $_FILES['file']['size']) {
-            unlink($destination); // Nettoyer en cas d'erreur
+            unlink($destination);
             throw new Exception('Erreur d\'intégrité du fichier');
+        }
+
+        // Assigner automatiquement au groupe si précisé
+        if (!empty($_POST['group'])) {
+            Cyla::setFileGroups($filename, [$_POST['group']]);
         }
 
         echo json_encode([
@@ -62,14 +64,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['file'])) {
         ]);
     } catch (Exception $e) {
         http_response_code(400);
-        echo json_encode([
-            'error' => $e->getMessage(),
-            'details' => error_get_last()
-        ]);
+        echo json_encode(['error' => $e->getMessage()]);
     }
     exit;
 }
 
-// Méthode non autorisée
+// === Créer un groupe ===
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'create_group') {
+    $name  = trim($_POST['name'] ?? '');
+    $color = $_POST['color'] ?? '#d4846a';
+    echo json_encode(Cyla::createGroup($name, $color));
+    exit;
+}
+
+// === Supprimer un groupe ===
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'delete_group') {
+    $name = trim($_POST['name'] ?? '');
+    echo json_encode(Cyla::deleteGroup($name));
+    exit;
+}
+
+// === Assigner des groupes à un fichier ===
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'set_file_groups') {
+    $filename = $_POST['filename'] ?? '';
+    $groups   = isset($_POST['groups']) ? (array)$_POST['groups'] : [];
+    echo json_encode(Cyla::setFileGroups($filename, $groups));
+    exit;
+}
+
+// === Lister les groupes ===
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['action'] === 'list_groups') {
+    echo json_encode(['success' => true, 'groups' => Cyla::listGroups()]);
+    exit;
+}
+
 http_response_code(405);
 echo json_encode(['error' => 'Méthode non autorisée']);

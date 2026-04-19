@@ -724,3 +724,211 @@ footer {
     from { opacity: 1; }
     to { opacity: 0; }
 }
+/* ===== GROUPES ===== */
+
+/* Création de groupe */
+.groups-manager {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.group-create-form {
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.group-create-form input[type="text"] {
+    flex: 1;
+    min-width: 150px;
+}
+
+.group-create-form input[type="color"] {
+    width: 2.5rem;
+    height: 2.5rem;
+    padding: 2px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius);
+    background: var(--color-bg);
+    cursor: pointer;
+}
+
+/* Liste des groupes */
+.groups-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+    align-items: center;
+}
+
+.group-tag-row {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    padding: 0.25rem 0.5rem 0.25rem 0.25rem;
+}
+
+.group-count {
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+}
+
+/* Badge groupe (réutilisable) */
+.group-badge {
+    display: inline-block;
+    padding: 0.15rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #fff;
+    white-space: nowrap;
+    text-shadow: 0 1px 2px rgba(0,0,0,.35);
+}
+
+.group-badge-sm {
+    padding: 0.1rem 0.45rem;
+    font-size: 0.72rem;
+}
+
+/* Badges sur les fichiers */
+.file-group-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 4px;
+}
+
+/* Filtre de groupe */
+.files-card-header {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.files-card-header h2 {
+    color: var(--color-primary);
+    margin-bottom: 0;
+}
+
+.group-filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+}
+
+.group-filter-btn {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border: 1.5px solid var(--color-border);
+    border-radius: 999px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--color-text-muted);
+    text-decoration: none;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.group-filter-btn:hover {
+    background: var(--color-border);
+    color: var(--color-text);
+}
+
+.group-filter-btn.active {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: #fff;
+}
+
+/* Bouton groupes dans les actions fichier */
+.btn-groups {
+    background-color: var(--color-bg);
+    border: 1px solid var(--color-border);
+    width: 2.5rem;
+    height: 2.5rem;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-groups:hover {
+    background-color: var(--color-border);
+}
+
+/* Petit bouton danger */
+.btn-sm {
+    padding: 0.2rem 0.4rem;
+    font-size: 0.8rem;
+    width: auto !important;
+    height: auto !important;
+}
+
+/* Sélecteur de groupe dans la zone d'upload */
+.upload-group-selector {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-sm);
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+}
+
+.upload-group-selector select {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius);
+    color: var(--color-text);
+    padding: 0.25rem 0.5rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+/* Modale groupes fichier */
+.group-modal {
+    max-width: 480px;
+}
+
+.group-modal-checkboxes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.group-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    cursor: pointer;
+    user-select: none;
+}
+
+.group-checkbox-label input[type="checkbox"] {
+    width: auto;
+    accent-color: var(--color-primary);
+}
+
+/* Texte muet */
+.text-muted {
+    color: var(--color-text-muted);
+    font-size: 0.9rem;
+}
+
+/* files-header flex */
+.files-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+}

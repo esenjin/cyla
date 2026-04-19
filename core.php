@@ -249,6 +249,89 @@ class Cyla {
             return ['success' => false, 'error' => 'Erreur lors de la suppression du fichier'];
         }
     }
+
+    // -------------------------
+    // Gestion des groupes
+    // -------------------------
+
+    private static function groupsFile() {
+        return __DIR__ . '/groups.json';
+    }
+
+    /**
+     * Charge tous les groupes depuis le fichier JSON
+     * @return array ['group_name' => ['files' => [...], 'color' => '#hex'], ...]
+     */
+    public static function listGroups() {
+        $file = self::groupsFile();
+        if (!file_exists($file)) return [];
+        $data = json_decode(file_get_contents($file), true);
+        return is_array($data) ? $data : [];
+    }
+
+    /**
+     * Sauvegarde les groupes dans le fichier JSON
+     */
+    private static function saveGroups(array $groups) {
+        file_put_contents(self::groupsFile(), json_encode($groups, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+    }
+
+    /**
+     * Crée un nouveau groupe
+     */
+    public static function createGroup(string $name, string $color = '#d4846a') {
+        $name = trim($name);
+        if (empty($name)) return ['success' => false, 'error' => 'Nom de groupe vide'];
+        $groups = self::listGroups();
+        if (isset($groups[$name])) return ['success' => false, 'error' => 'Ce groupe existe déjà'];
+        $groups[$name] = ['files' => [], 'color' => $color];
+        self::saveGroups($groups);
+        return ['success' => true];
+    }
+
+    /**
+     * Supprime un groupe
+     */
+    public static function deleteGroup(string $name) {
+        $groups = self::listGroups();
+        if (!isset($groups[$name])) return ['success' => false, 'error' => 'Groupe introuvable'];
+        unset($groups[$name]);
+        self::saveGroups($groups);
+        return ['success' => true];
+    }
+
+    /**
+     * Assigne ou retire un fichier d'un groupe
+     */
+    public static function setFileGroups(string $filename, array $groupNames) {
+        $groups = self::listGroups();
+        // Retirer le fichier de tous les groupes d'abord
+        foreach ($groups as $gname => &$group) {
+            $group['files'] = array_values(array_filter($group['files'], fn($f) => $f !== $filename));
+        }
+        // Ajouter dans les groupes sélectionnés
+        foreach ($groupNames as $gname) {
+            if (isset($groups[$gname]) && !in_array($filename, $groups[$gname]['files'])) {
+                $groups[$gname]['files'][] = $filename;
+            }
+        }
+        self::saveGroups($groups);
+        return ['success' => true];
+    }
+
+    /**
+     * Retourne les groupes d'un fichier donné
+     */
+    public static function getFileGroups(string $filename) {
+        $groups = self::listGroups();
+        $result = [];
+        foreach ($groups as $gname => $group) {
+            if (in_array($filename, $group['files'])) {
+                $result[] = ['name' => $gname, 'color' => $group['color']];
+            }
+        }
+        return $result;
+    }
 }
 
 // Vérifier et mettre à jour l'activité si l'utilisateur est connecté
