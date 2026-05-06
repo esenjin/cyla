@@ -19,7 +19,7 @@ define('UPLOAD_DIR', __DIR__ . '/fichiers/');
 define('MAX_FILE_SIZE', 100 * 1024 * 1024); // 100 Mo en octets
 define('ALLOWED_EXTENSIONS', [
     'png', 'jpg', 'jpeg', 'gif', 'webm', 'mp4', 'wmv',
-    'mp3', 'flac', 'ogg', 'zip', 'css', 'pdf', 'webp',
+    'mp3', 'flac', 'ogg', 'css', 'pdf', 'webp',
     'zip', 'rar', 'm3u', 'm3u8', 'txt'
 ]);
 
