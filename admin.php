@@ -76,14 +76,51 @@ $currentPage  = isset($_GET['page'])    ? max(1, intval($_GET['page']))    : 1;
 $filesPerPage = isset($_GET['perPage']) ? intval($_GET['perPage'])         : 24;
 $filesPerPage = in_array($filesPerPage, [24, 48, 96]) ? $filesPerPage     : 24;
 $filterGroup  = $_GET['group'] ?? '';
+$filterType   = $_GET['type']  ?? '';
+
+// Définition des types de fichiers
+$fileTypeFilters = [
+    'image'   => ['label' => 'Images',   'icon' => '🖼',  'extensions' => ['png','jpg','jpeg','gif','webp']],
+    'video'   => ['label' => 'Vidéos',   'icon' => '🎬',  'extensions' => ['webm','mp4','wmv']],
+    'music'   => ['label' => 'Musique',  'icon' => '🎵',  'extensions' => ['mp3','flac','ogg','m3u','m3u8']],
+    'archive' => ['label' => 'Archives', 'icon' => '📦',  'extensions' => ['zip','rar']],
+    'document'=> ['label' => 'Documents','icon' => '📄',  'extensions' => ['pdf','txt']],
+    'code'    => ['label' => 'Code',     'icon' => '🖥',  'extensions' => ['css']],
+];
 
 $allGroups = Cyla::listGroups();
 
+// Fonction de filtrage par type
+$filterByType = function(array $files) use ($filterType, $fileTypeFilters): array {
+    if ($filterType === '' || !isset($fileTypeFilters[$filterType])) return $files;
+    $allowed = $fileTypeFilters[$filterType]['extensions'];
+    return array_values(array_filter($files, fn($f) => in_array($f['extension'], $allowed)));
+};
+
 if ($filterGroup !== '' && isset($allGroups[$filterGroup])) {
     // Filtrage par groupe : on charge TOUS les fichiers, on filtre, puis on pagine
-    $allFileData   = Cyla::listFiles(1, PHP_INT_MAX);
+    $allFileData    = Cyla::listFiles(1, PHP_INT_MAX);
     $groupFileNames = $allGroups[$filterGroup]['files'];
-    $filteredAll   = array_values(array_filter($allFileData['files'], fn($f) => in_array($f['name'], $groupFileNames)));
+    $filteredAll    = array_values(array_filter($allFileData['files'], fn($f) => in_array($f['name'], $groupFileNames)));
+    $filteredAll    = $filterByType($filteredAll);
+
+    $totalFiltered = count($filteredAll);
+    $totalPages    = max(1, ceil($totalFiltered / $filesPerPage));
+    $currentPage   = max(1, min($currentPage, $totalPages));
+    $offset        = ($currentPage - 1) * $filesPerPage;
+    $files         = array_slice($filteredAll, $offset, $filesPerPage);
+
+    $fileData = [
+        'files'       => $files,
+        'total'       => $totalFiltered,
+        'totalPages'  => $totalPages,
+        'currentPage' => $currentPage,
+        'perPage'     => $filesPerPage,
+    ];
+} elseif ($filterType !== '' && isset($fileTypeFilters[$filterType])) {
+    // Filtrage par type uniquement
+    $allFileData = Cyla::listFiles(1, PHP_INT_MAX);
+    $filteredAll = $filterByType($allFileData['files']);
 
     $totalFiltered = count($filteredAll);
     $totalPages    = max(1, ceil($totalFiltered / $filesPerPage));
@@ -191,12 +228,35 @@ ob_start();
 <div class="card">
     <div class="files-card-header">
         <h2>Fichiers hébergés</h2>
+
+        <!-- Filtres par type -->
+        <div class="type-filter">
+            <?php
+            $typeBase = '?perPage=' . $filesPerPage . ($filterGroup ? '&group=' . urlencode($filterGroup) : '');
+            ?>
+            <a href="<?php echo $typeBase; ?>"
+               class="type-filter-btn <?php echo $filterType === '' ? 'active' : ''; ?>">
+                Tous
+            </a>
+            <?php foreach ($fileTypeFilters as $typeKey => $typeDef): ?>
+                <?php $isActive = ($filterType === $typeKey); ?>
+                <a href="<?php echo $typeBase; ?>&type=<?php echo urlencode($typeKey); ?>"
+                   class="type-filter-btn <?php echo $isActive ? 'active' : ''; ?>">
+                    <span class="type-filter-icon"><?php echo $typeDef['icon']; ?></span>
+                    <?php echo Cyla::escape($typeDef['label']); ?>
+                </a>
+            <?php endforeach; ?>
+        </div>
+
+        <!-- Filtres par groupe -->
+        <?php if (!empty($allGroups)): ?>
         <div class="group-filter">
-            <a href="?perPage=<?php echo $filesPerPage; ?>"
-               class="group-filter-btn <?php echo $filterGroup === '' ? 'active' : ''; ?>">Tous</a>
+            <?php $groupBase = '?perPage=' . $filesPerPage . ($filterType ? '&type=' . urlencode($filterType) : ''); ?>
+            <a href="<?php echo $groupBase; ?>"
+               class="group-filter-btn <?php echo $filterGroup === '' ? 'active' : ''; ?>">Tous les groupes</a>
             <?php foreach ($allGroups as $gname => $gdata): ?>
                 <?php $isActive = ($filterGroup === $gname); ?>
-                <a href="?group=<?php echo urlencode($gname); ?>&perPage=<?php echo $filesPerPage; ?>"
+                <a href="<?php echo $groupBase; ?>&group=<?php echo urlencode($gname); ?>"
                    class="group-filter-btn <?php echo $isActive ? 'active' : ''; ?>"
                    style="border-color:<?php echo Cyla::escape($gdata['color']); ?>;
                           <?php echo $isActive ? 'background:' . Cyla::escape($gdata['color']) . ';color:#fff;' : 'color:' . Cyla::escape($gdata['color']); ?>">
@@ -204,16 +264,27 @@ ob_start();
                 </a>
             <?php endforeach; ?>
         </div>
+        <?php endif; ?>
     </div>
 
     <?php if (empty($files)): ?>
-        <p class="text-muted">Aucun fichier<?php echo $filterGroup ? ' dans ce groupe' : ' hébergé'; ?>.</p>
+        <p class="text-muted">Aucun fichier<?php
+            if ($filterGroup) echo ' dans ce groupe';
+            elseif ($filterType && isset($fileTypeFilters[$filterType])) echo ' de type « ' . Cyla::escape($fileTypeFilters[$filterType]['label']) . ' »';
+            else echo ' hébergé';
+        ?>.</p>
     <?php else: ?>
         <div class="files-header">
             <p class="files-count">
                 <?php
-                if ($filterGroup) {
-                    echo count($files) . ' fichier(s) dans « ' . Cyla::escape($filterGroup) . ' »';
+                if ($filterGroup || $filterType) {
+                    $label = '';
+                    if ($filterGroup) $label .= '« ' . Cyla::escape($filterGroup) . ' »';
+                    if ($filterType && isset($fileTypeFilters[$filterType])) {
+                        if ($label) $label .= ' · ';
+                        $label .= $fileTypeFilters[$filterType]['icon'] . ' ' . Cyla::escape($fileTypeFilters[$filterType]['label']);
+                    }
+                    echo $fileData['total'] . ' fichier(s) — ' . $label;
                 } else {
                     $st = (($fileData['currentPage'] - 1) * $fileData['perPage']) + 1;
                     $en = min($st + count($fileData['files']) - 1, $fileData['total']);
@@ -308,11 +379,13 @@ ob_start();
 
         <?php if ($fileData['totalPages'] > 1): ?>
         <div class="pagination">
+            <?php
+            $gParam = ($filterGroup ? 'group='.urlencode($filterGroup).'&' : '') . ($filterType ? 'type='.urlencode($filterType).'&' : '');
+            ?>
             <?php if ($fileData['currentPage'] > 1): ?>
-                <a href="?<?php echo $filterGroup ? 'group='.urlencode($filterGroup).'&' : ''; ?>page=<?php echo $fileData['currentPage']-1; ?>&perPage=<?php echo $filesPerPage; ?>" class="pagination-link">&laquo;</a>
+                <a href="?<?php echo $gParam; ?>page=<?php echo $fileData['currentPage']-1; ?>&perPage=<?php echo $filesPerPage; ?>" class="pagination-link">&laquo;</a>
             <?php endif; ?>
             <?php
-            $gParam = $filterGroup ? 'group='.urlencode($filterGroup).'&' : '';
             $pS = max(1, $fileData['currentPage']-2);
             $pE = min($fileData['totalPages'], $fileData['currentPage']+2);
             if ($pS > 1) { echo '<a href="?'.$gParam.'page=1&perPage='.$filesPerPage.'" class="pagination-link">1</a>'; if ($pS>2) echo '<span class="pagination-ellipsis">…</span>'; }
@@ -508,6 +581,7 @@ function submitDelete(filename) {
 function changeFilesPerPage(perPage) {
     const url = new URL(window.location.href);
     url.searchParams.set('perPage', perPage);
+    url.searchParams.delete('page'); // reset to page 1
     window.location.href = url.toString();
 }
 </script>
