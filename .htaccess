@@ -18,7 +18,7 @@
     </IfModule>
 </Files>
 # Autoriser l'accès aux points d'entrée spécifiques
-<Files ~ "^(index|admin|login|logout|share)\.php$">
+<Files ~ "^(index|admin|login|logout|share|vestikan-login|vestikan-callback)\.php$">
     <IfModule !mod_authz_core.c>
         Order Allow,Deny
         Allow from all

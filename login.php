@@ -65,6 +65,22 @@ ob_start(); ?>
             <button type="submit" class="btn">Se connecter</button>
         </div>
     </form>
+
+    <?php if (file_exists(__DIR__ . '/vestikan-config.php')): ?>
+    <div class="login-sso-separator"><span>ou</span></div>
+
+    <div class="login-sso">
+        <a href="vestikan-login.php" class="btn btn-vestikan">
+            <svg class="vestikan-icon" width="18" height="18" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M12 2 4 5v6c0 5 3.4 8.6 8 11 4.6-2.4 8-6 8-11V5l-8-3z"/>
+                <path d="m9 12 2 2 4-4"/>
+            </svg>
+            Se connecter avec Vestikan
+        </a>
+    </div>
+    <?php endif; ?>
 </div>
 
 <style>
@@ -89,6 +105,59 @@ ob_start(); ?>
 .form-actions {
     margin-top: var(--spacing-md);
     text-align: center;
+}
+
+/* Séparateur « ou » entre login natif et SSO */
+.login-sso-separator {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin: var(--spacing-lg) 0 var(--spacing-md);
+    color: var(--color-text-muted);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.login-sso-separator::before,
+.login-sso-separator::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background-color: var(--color-border);
+}
+
+.login-sso {
+    display: flex;
+    justify-content: center;
+}
+
+/* Bouton Vestikan : fond sombre, accent rosé au survol */
+.btn-vestikan {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    width: 100%;
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    border: 1px solid var(--color-accent);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.btn-vestikan:hover {
+    background-color: var(--color-accent);
+    border-color: var(--color-primary);
+    color: #fff;
+}
+
+.btn-vestikan .vestikan-icon {
+    color: var(--color-primary);
+    flex-shrink: 0;
+}
+
+.btn-vestikan:hover .vestikan-icon {
+    color: #fff;
 }
 
 /* Animation de l'erreur */

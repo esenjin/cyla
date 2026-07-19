@@ -1,0 +1,5 @@
+# Secret Vestikan — NE JAMAIS committer (contient le client_secret)
+vestikan-config.php
+
+# Fichiers hébergés par les utilisateurs
+fichiers/
