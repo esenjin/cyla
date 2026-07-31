@@ -7,7 +7,7 @@ if (!defined('CYLA_CORE')) {
 
 // Site configuration
 define('SITE_NAME', 'Cyla');
-define('SITE_VERSION', '3.2.0');
+define('SITE_VERSION', '3.2.1');
 define('SITE_URL', 'https://concepts.esenjin.xyz/cyla/');
 
 // Files configuration
