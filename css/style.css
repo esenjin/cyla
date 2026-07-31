@@ -592,27 +592,48 @@ footer {
     position: fixed;
     bottom: var(--spacing-lg);
     right: var(--spacing-lg);
-    background-color: var(--color-success);
-    color: white;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    background-color: var(--color-bg-alt);
+    color: var(--color-text);
+    border: 1px solid var(--color-success);
+    border-left: 4px solid var(--color-success);
     padding: var(--spacing-md) var(--spacing-lg);
     border-radius: var(--border-radius);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    font-size: 0.9rem;
+    font-weight: 500;
     animation: slideIn 0.3s ease-out, fadeOut 0.3s ease-in 2.7s forwards;
     z-index: 1000;
     pointer-events: none;
 }
 
+.notification::before {
+    content: "✓";
+    color: var(--color-success);
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
 .notification.error {
-    background-color: var(--color-error);
+    border-color: var(--color-error);
+    border-left-color: var(--color-error);
+}
+
+.notification.error::before {
+    content: "✕";
+    color: var(--color-error);
 }
 
 @keyframes slideIn {
-    from { transform: translateY(100%); opacity: 0; }
+    from { transform: translateY(20px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
 }
 
 @keyframes fadeOut {
-    from { opacity: 1; }
-    to { opacity: 0; }
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0; transform: translateY(10px); }
 }
 
 .share-container {
@@ -707,28 +728,7 @@ footer {
     }
 }
 
-/* Animation de notification */
-.notification {
-    position: fixed;
-    bottom: var(--spacing-lg);
-    right: var(--spacing-lg);
-    background-color: var(--color-success);
-    color: white;
-    padding: var(--spacing-md) var(--spacing-lg);
-    border-radius: var(--border-radius);
-    animation: slideIn 0.3s ease-out, fadeOut 0.3s ease-in 2.7s forwards;
-    z-index: 1000;
-}
-
-@keyframes slideIn {
-    from { transform: translateY(100%); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-}
-
-@keyframes fadeOut {
-    from { opacity: 1; }
-    to { opacity: 0; }
-}
+/* (styles de notification définis plus haut, voir section "Styles de notification") */
 /* ===== FILTRE PAR TYPE ===== */
 
 .type-filter {

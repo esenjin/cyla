@@ -105,6 +105,7 @@ if ($filterGroup !== '' && isset($allGroups[$filterGroup])) {
     $filteredAll    = $filterByType($filteredAll);
 
     $totalFiltered = count($filteredAll);
+    $totalSizeFiltered = array_sum(array_column($filteredAll, 'size'));
     $totalPages    = max(1, ceil($totalFiltered / $filesPerPage));
     $currentPage   = max(1, min($currentPage, $totalPages));
     $offset        = ($currentPage - 1) * $filesPerPage;
@@ -113,6 +114,7 @@ if ($filterGroup !== '' && isset($allGroups[$filterGroup])) {
     $fileData = [
         'files'       => $files,
         'total'       => $totalFiltered,
+        'totalSize'   => $totalSizeFiltered,
         'totalPages'  => $totalPages,
         'currentPage' => $currentPage,
         'perPage'     => $filesPerPage,
@@ -123,6 +125,7 @@ if ($filterGroup !== '' && isset($allGroups[$filterGroup])) {
     $filteredAll = $filterByType($allFileData['files']);
 
     $totalFiltered = count($filteredAll);
+    $totalSizeFiltered = array_sum(array_column($filteredAll, 'size'));
     $totalPages    = max(1, ceil($totalFiltered / $filesPerPage));
     $currentPage   = max(1, min($currentPage, $totalPages));
     $offset        = ($currentPage - 1) * $filesPerPage;
@@ -131,6 +134,7 @@ if ($filterGroup !== '' && isset($allGroups[$filterGroup])) {
     $fileData = [
         'files'       => $files,
         'total'       => $totalFiltered,
+        'totalSize'   => $totalSizeFiltered,
         'totalPages'  => $totalPages,
         'currentPage' => $currentPage,
         'perPage'     => $filesPerPage,
@@ -277,6 +281,7 @@ ob_start();
         <div class="files-header">
             <p class="files-count">
                 <?php
+                $sizeMo = round($fileData['totalSize'] / 1024 / 1024, 2);
                 if ($filterGroup || $filterType) {
                     $label = '';
                     if ($filterGroup) $label .= '« ' . Cyla::escape($filterGroup) . ' »';
@@ -284,11 +289,11 @@ ob_start();
                         if ($label) $label .= ' · ';
                         $label .= $fileTypeFilters[$filterType]['icon'] . ' ' . Cyla::escape($fileTypeFilters[$filterType]['label']);
                     }
-                    echo $fileData['total'] . ' fichier(s) — ' . $label;
+                    echo $fileData['total'] . ' fichier(s) (' . $sizeMo . ' Mo) — ' . $label;
                 } else {
                     $st = (($fileData['currentPage'] - 1) * $fileData['perPage']) + 1;
                     $en = min($st + count($fileData['files']) - 1, $fileData['total']);
-                    echo "Affichage de $st–$en sur {$fileData['total']} fichiers";
+                    echo "Affichage de $st–$en sur {$fileData['total']} fichiers ($sizeMo Mo)";
                 }
                 ?>
             </p>

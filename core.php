@@ -157,6 +157,7 @@ class Cyla {
         
         // Calculer la pagination
         $total = count($allFiles);
+        $totalSize = array_sum(array_map('filesize', $allFiles));
         $totalPages = ceil($total / $perPage);
         $page = max(1, min($page, $totalPages));
         $offset = ($page - 1) * $perPage;
@@ -190,6 +191,7 @@ class Cyla {
         return [
             'files' => $files,
             'total' => $total,
+            'totalSize' => $totalSize,
             'totalPages' => $totalPages,
             'currentPage' => $page,
             'perPage' => $perPage
