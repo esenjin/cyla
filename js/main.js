@@ -1,10 +1,19 @@
+// Affiche une notification stylisée qui disparaît automatiquement après 3s
+function showNotif(msg, isError = false) {
+    const n = document.createElement('div');
+    n.className = 'notification' + (isError ? ' error' : '');
+    n.textContent = msg;
+    document.body.appendChild(n);
+    setTimeout(() => n.remove(), 3000);
+}
+
 // Fonction pour copier dans le presse-papier
-function copyToClipboard(text) {
+function copyToClipboard(text, msg = 'Copié dans le presse-papier !') {
     navigator.clipboard.writeText(text).then(() => {
-        alert('Copié dans le presse-papier !');
+        showNotif(msg);
     }).catch(err => {
         console.error('Erreur lors de la copie :', err);
-        alert('Erreur lors de la copie');
+        showNotif('Erreur lors de la copie', true);
     });
 }
 
