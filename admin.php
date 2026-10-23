@@ -1,10 +1,8 @@
 <?php
 ob_start();
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
 
 define('CYLA_CORE', true);
-require_once 'core.php';
+require_once __DIR__ . '/core.php';
 
 if (headers_sent($filename, $linenum)) {
     exit("Headers already sent in $filename on line $linenum");
@@ -15,17 +13,17 @@ if (!Cyla::isLoggedIn()) {
     exit;
 }
 
-$error   = $_GET['error']   ?? null;
-$success = $_GET['success'] ?? null;
+$error   = Cyla::input($_GET, 'error')   ?: null;
+$success = Cyla::input($_GET, 'success') ?: null;
 
 // --- Changement de mot de passe ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'change_password') {
-    if (!isset($_POST['csrf_token']) || !Cyla::verifyCSRFToken($_POST['csrf_token'])) {
+    if (!Cyla::verifyCSRFToken($_POST['csrf_token'] ?? null)) {
         $error = 'Token de sécurité invalide';
     } else {
-        $current_password = $_POST['current_password'] ?? '';
-        $new_password     = $_POST['new_password']     ?? '';
-        $confirm_password = $_POST['confirm_password'] ?? '';
+        $current_password = Cyla::input($_POST, 'current_password');
+        $new_password     = Cyla::input($_POST, 'new_password');
+        $confirm_password = Cyla::input($_POST, 'confirm_password');
         if (empty($current_password) || empty($new_password) || empty($confirm_password)) {
             $error = 'Tous les champs sont requis';
         } elseif ($new_password !== $confirm_password) {
@@ -34,17 +32,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'chang
             global $ADMIN_USERS;
             $username = $_SESSION['user'];
             $user     = $ADMIN_USERS[$username];
-            if (hash(HASH_ALGO, $current_password . $user['salt']) !== $user['password']) {
+            if (!hash_equals($user['password'], hash(HASH_ALGO, $current_password . $user['salt']))) {
                 $error = 'Mot de passe actuel incorrect';
             } else {
                 $ADMIN_USERS[$username]['password'] = hash(HASH_ALGO, $new_password . $user['salt']);
-                $config_content = file_get_contents('config.php');
+                $config_content = file_get_contents(__DIR__ . '/config.php');
                 $config_content = preg_replace(
                     '/\'password\' => \'' . preg_quote($user['password'], '/') . '\'/',
                     '\'password\' => \'' . $ADMIN_USERS[$username]['password'] . '\'',
                     $config_content
                 );
-                file_put_contents('config.php', $config_content);
+                file_put_contents(__DIR__ . '/config.php', $config_content, LOCK_EX);
                 $success = 'Mot de passe modifié avec succès';
             }
         }
@@ -53,17 +51,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'chang
 
 // --- Suppression de fichier ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delete_file') {
-    if (!isset($_POST['csrf_token']) || !Cyla::verifyCSRFToken($_POST['csrf_token'])) {
+    if (!Cyla::verifyCSRFToken($_POST['csrf_token'] ?? null)) {
         header('Location: admin.php?error=' . urlencode('Token de sécurité invalide'));
         exit;
     }
-    if (!isset($_POST['filename'])) {
+    $deleteName = Cyla::input($_POST, 'filename');
+    if ($deleteName === '') {
         header('Location: admin.php?error=' . urlencode('Nom de fichier manquant'));
         exit;
     }
-    $result = Cyla::deleteFile($_POST['filename'], $_POST['path'] ?? 'fichiers/');
+    $result = Cyla::deleteFile($deleteName, Cyla::input($_POST, 'path', 'fichiers/'));
     if ($result['success']) {
-        Cyla::setFileGroups($_POST['filename'], []);
+        Cyla::setFileGroups($deleteName, []);
         header('Location: admin.php?success=' . urlencode('Fichier supprimé avec succès'));
     } else {
         header('Location: admin.php?error=' . urlencode($result['error']));
@@ -72,11 +71,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delet
 }
 
 // --- Données pour la page ---
-$currentPage  = isset($_GET['page'])    ? max(1, intval($_GET['page']))    : 1;
-$filesPerPage = isset($_GET['perPage']) ? intval($_GET['perPage'])         : 24;
-$filesPerPage = in_array($filesPerPage, [24, 48, 96]) ? $filesPerPage     : 24;
-$filterGroup  = $_GET['group'] ?? '';
-$filterType   = $_GET['type']  ?? '';
+$currentPage  = max(1, (int) Cyla::input($_GET, 'page', '1'));
+$filesPerPage = (int) Cyla::input($_GET, 'perPage', '24');
+$filesPerPage = in_array($filesPerPage, [24, 48, 96], true) ? $filesPerPage : 24;
+$filterGroup  = Cyla::input($_GET, 'group');
+$filterType   = Cyla::input($_GET, 'type');
 
 // Définition des types de fichiers
 $fileTypeFilters = [
@@ -106,7 +105,7 @@ if ($filterGroup !== '' && isset($allGroups[$filterGroup])) {
 
     $totalFiltered = count($filteredAll);
     $totalSizeFiltered = array_sum(array_column($filteredAll, 'size'));
-    $totalPages    = max(1, ceil($totalFiltered / $filesPerPage));
+    $totalPages    = max(1, (int) ceil($totalFiltered / $filesPerPage));
     $currentPage   = max(1, min($currentPage, $totalPages));
     $offset        = ($currentPage - 1) * $filesPerPage;
     $files         = array_slice($filteredAll, $offset, $filesPerPage);
@@ -126,7 +125,7 @@ if ($filterGroup !== '' && isset($allGroups[$filterGroup])) {
 
     $totalFiltered = count($filteredAll);
     $totalSizeFiltered = array_sum(array_column($filteredAll, 'size'));
-    $totalPages    = max(1, ceil($totalFiltered / $filesPerPage));
+    $totalPages    = max(1, (int) ceil($totalFiltered / $filesPerPage));
     $currentPage   = max(1, min($currentPage, $totalPages));
     $offset        = ($currentPage - 1) * $filesPerPage;
     $files         = array_slice($filteredAll, $offset, $filesPerPage);
@@ -293,7 +292,7 @@ ob_start();
                 } else {
                     $st = (($fileData['currentPage'] - 1) * $fileData['perPage']) + 1;
                     $en = min($st + count($fileData['files']) - 1, $fileData['total']);
-                    echo "Affichage de $st–$en sur {$fileData['total']} fichiers ($sizeMo Mo)";
+                    echo "Affichage de {$st}–{$en} sur {$fileData['total']} fichiers ({$sizeMo} Mo)";
                 }
                 ?>
             </p>
@@ -594,5 +593,5 @@ function changeFilesPerPage(perPage) {
 <script src="js/password-modal.js"></script>
 <?php
 $content = ob_get_clean();
-require 'layout.php';
+require __DIR__ . '/layout.php';
 ob_end_flush();

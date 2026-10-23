@@ -1,6 +1,6 @@
 <?php
 define('CYLA_CORE', true);
-require_once 'core.php';
+require_once __DIR__ . '/core.php';
 
 // Rediriger vers l'admin si déjà connecté
 if (Cyla::isLoggedIn()) {

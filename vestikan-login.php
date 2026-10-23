@@ -7,7 +7,7 @@
  * stocké dans la session CYLA_SESSION, la même qui survivra jusqu'au callback.
  */
 define('CYLA_CORE', true);
-require_once 'core.php';
+require_once __DIR__ . '/core.php';
 
 // Déjà connecté ? Inutile de repasser par l'IdP.
 if (Cyla::isLoggedIn()) {

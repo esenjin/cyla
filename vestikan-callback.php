@@ -12,7 +12,7 @@
  * « State invalide »).
  */
 define('CYLA_CORE', true);
-require_once 'core.php';
+require_once __DIR__ . '/core.php';
 
 require_once __DIR__ . '/vestikan-sdk.php';
 
@@ -50,7 +50,7 @@ $returnTo = $vk->popReturnTo() ?: 'admin.php';
 
 // Sécurité : on n'autorise qu'une redirection interne relative, jamais une URL
 // absolue venue de l'extérieur (évite l'open-redirect).
-if (!preg_match('#^[a-zA-Z0-9._/-]+$#', $returnTo) || strpos($returnTo, '//') !== false) {
+if (!preg_match('#^[a-zA-Z0-9._/-]+$#', $returnTo) || str_contains($returnTo, '//')) {
     $returnTo = 'admin.php';
 }
 

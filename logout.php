@@ -1,9 +1,9 @@
 <?php
 define('CYLA_CORE', true);
-require_once 'core.php';
+require_once __DIR__ . '/core.php';
 
 // Vérification du token CSRF pour la déconnexion
-$validLogout = isset($_GET['csrf_token']) && Cyla::verifyCSRFToken($_GET['csrf_token']);
+$validLogout = Cyla::verifyCSRFToken($_GET['csrf_token'] ?? null);
 
 if (!$validLogout) {
     // Si pas de token valide, redirection avec message d'erreur

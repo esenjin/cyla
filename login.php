@@ -1,6 +1,6 @@
 <?php
 define('CYLA_CORE', true);
-require_once 'core.php';
+require_once __DIR__ . '/core.php';
 
 // Rediriger si déjà connecté
 if (Cyla::isLoggedIn()) {
@@ -8,18 +8,30 @@ if (Cyla::isLoggedIn()) {
     exit;
 }
 
-$error = null;
+// Messages transmis par redirection (déconnexion, échec Vestikan…).
+// Seuls les messages émis par Cyla sont affichés : un lien forgé avec un
+// texte arbitraire (?error=Votre compte est suspendu…) est ignoré.
+const LOGIN_ALLOWED_ERRORS = [
+    'Connexion Vestikan indisponible',
+    'Connexion Vestikan refusée',
+];
+const LOGIN_ALLOWED_SUCCESS = [
+    'Vous avez été déconnecté avec succès',
+];
+
+$error   = in_array(Cyla::input($_GET, 'error'), LOGIN_ALLOWED_ERRORS, true) ? $_GET['error'] : null;
+$success = in_array(Cyla::input($_GET, 'success'), LOGIN_ALLOWED_SUCCESS, true) ? $_GET['success'] : null;
 
 // Traitement du formulaire
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Vérification du token CSRF
-    if (!isset($_POST['csrf_token']) || !Cyla::verifyCSRFToken($_POST['csrf_token'])) {
+    if (!Cyla::verifyCSRFToken($_POST['csrf_token'] ?? null)) {
         $error = 'Session invalide, veuillez réessayer';
     } else {
-        $username = $_POST['username'] ?? '';
-        $password = $_POST['password'] ?? '';
+        $username = Cyla::input($_POST, 'username');
+        $password = Cyla::input($_POST, 'password');
 
-        if (empty($username) || empty($password)) {
+        if ($username === '' || $password === '') {
             $error = 'Veuillez remplir tous les champs';
         } else if (!Cyla::authenticate($username, $password)) {
             $error = 'Identifiants incorrects';
@@ -49,7 +61,7 @@ ob_start(); ?>
                    name="username" 
                    required 
                    autocomplete="username"
-                   value="<?php echo isset($_POST['username']) ? Cyla::escape($_POST['username']) : ''; ?>">
+                   value="<?php echo Cyla::escape(Cyla::input($_POST, 'username')); ?>">
         </div>
 
         <div class="form-group">
@@ -174,4 +186,4 @@ ob_start(); ?>
 
 <?php
 $content = ob_get_clean();
-require 'layout.php';
+require __DIR__ . '/layout.php';

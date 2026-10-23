@@ -1,63 +1,32 @@
 <?php
 define('CYLA_CORE', true);
-require_once 'core.php';
+require_once __DIR__ . '/core.php';
 
 $error = null;
 $file_info = null;
+$filepath = null;
+
+$filename = Cyla::input($_GET, 'file');
+$path     = Cyla::normalizeStoragePath($_GET['path'] ?? null);
 
 // Vérifier si un fichier est spécifié
-if (!isset($_GET['file'])) {
+if ($filename === '') {
     $error = 'Aucun fichier spécifié';
 } else {
-    $filename = $_GET['file'];
-    $path = $_GET['path'] ?? 'fichiers/';
-    
-    // Déterminer le chemin complet selon le dossier
-    $basePath = '';
-    switch ($path) {
-        case 'v1/img/fichiers/':
-            $basePath = __DIR__ . '/v1/img/fichiers/';
-            break;
-        case 'v2/file/':
-            $basePath = __DIR__ . '/v2/file/';
-            break;
-        default:
-            $basePath = UPLOAD_DIR;
-            $path = 'fichiers/'; // Assurer que le path par défaut est correct
-    }
-    
-    $filepath = $basePath . $filename;
-    
-    // Vérifier que le fichier existe et est un fichier régulier
-    if (!file_exists($filepath) || !is_file($filepath)) {
+    // Résolution sécurisée : le fichier doit exister et se trouver DANS un des
+    // dossiers de stockage (toute tentative « ../ » est rejetée).
+    $filepath = Cyla::resolveFilePath($filename, $path);
+
+    if ($filepath === null) {
         $error = 'Fichier introuvable';
     } else {
-        // Vérifier que le chemin est sécurisé
-        $realpath = realpath($filepath);
-        $allowed = false;
-        
-        if (strpos($realpath, realpath(UPLOAD_DIR)) === 0) {
-            $allowed = true;
-        } else {
-            foreach (LEGACY_UPLOAD_DIRS as $dir) {
-                if (strpos($realpath, realpath($dir)) === 0) {
-                    $allowed = true;
-                    break;
-                }
-            }
-        }
-        
-        if (!$allowed) {
-            $error = 'Accès non autorisé';
-        } else {
-            // Récupérer les informations du fichier
-            $file_info = [
-                'name' => $filename,
-                'size' => filesize($filepath),
-                'extension' => strtolower(pathinfo($filename, PATHINFO_EXTENSION)),
-                'preview_type' => getPreviewType(pathinfo($filename, PATHINFO_EXTENSION))
-            ];
-        }
+        $extension = pathinfo($filename, PATHINFO_EXTENSION);
+        $file_info = [
+            'name'         => $filename,
+            'size'         => (int) filesize($filepath),
+            'extension'    => strtolower($extension),
+            'preview_type' => getPreviewType($extension),
+        ];
     }
 }
 
@@ -215,4 +184,4 @@ async function handleCopy(elementId, message) {
 
 <?php
 $content = ob_get_clean();
-require 'layout.php';
+require __DIR__ . '/layout.php';

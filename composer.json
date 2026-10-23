@@ -1,0 +1,16 @@
+{
+    "name": "esenjin/cyla",
+    "description": "Hébergement / partage simple de fichiers.",
+    "type": "project",
+    "license": "proprietary",
+    "require": {
+        "php": ">=8.5",
+        "ext-session": "*"
+    },
+    "suggest": {
+        "ext-curl": "Nécessaire pour la connexion « Se connecter avec Vestikan »."
+    },
+    "config": {
+        "platform-check": true
+    }
+}

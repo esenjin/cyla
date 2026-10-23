@@ -1,4 +1,6 @@
 <?php
+declare(strict_types=1);
+
 // Prevent direct access to this file
 if (!defined('CYLA_CORE')) {
     header('HTTP/1.0 403 Forbidden');
@@ -7,7 +9,7 @@ if (!defined('CYLA_CORE')) {
 
 // Site configuration
 define('SITE_NAME', 'Cyla');
-define('SITE_VERSION', '3.2.1');
+define('SITE_VERSION', '3.3.0');
 define('SITE_URL', 'https://concepts.esenjin.xyz/cyla/');
 
 // Files configuration
@@ -49,32 +51,30 @@ define('SESSION_NAME', 'CYLA_SESSION');
 define('DEBUG_MODE', false); // À mettre à false en production
 if (DEBUG_MODE) {
     error_reporting(E_ALL);
-    ini_set('display_errors', 1);
+    ini_set('display_errors', '1');
 } else {
     error_reporting(0);
-    ini_set('display_errors', 0);
+    ini_set('display_errors', '0');
 }
 
 // Fonction pour vérifier si une extension est autorisée
-function isAllowedExtension($extension) {
-    return in_array(strtolower($extension), ALLOWED_EXTENSIONS);
+function isAllowedExtension(string $extension): bool {
+    return in_array(strtolower($extension), ALLOWED_EXTENSIONS, true);
 }
 
 // Fonction pour vérifier si un fichier peut avoir un aperçu
-function canPreview($extension) {
-    $extension = strtolower($extension);
-    return in_array($extension, PREVIEW_IMAGES) ||
-           in_array($extension, PREVIEW_VIDEOS) ||
-           in_array($extension, PREVIEW_AUDIOS) ||
-           in_array($extension, PREVIEW_TEXTS);
+function canPreview(string $extension): bool {
+    return getPreviewType($extension) !== 'none';
 }
 
 // Fonction pour obtenir le type d'aperçu
-function getPreviewType($extension) {
+function getPreviewType(string $extension): string {
     $extension = strtolower($extension);
-    if (in_array($extension, PREVIEW_IMAGES)) return 'image';
-    if (in_array($extension, PREVIEW_VIDEOS)) return 'video';
-    if (in_array($extension, PREVIEW_AUDIOS)) return 'audio';
-    if (in_array($extension, PREVIEW_TEXTS)) return 'text';
-    return 'none';
+    return match (true) {
+        in_array($extension, PREVIEW_IMAGES, true) => 'image',
+        in_array($extension, PREVIEW_VIDEOS, true) => 'video',
+        in_array($extension, PREVIEW_AUDIOS, true) => 'audio',
+        in_array($extension, PREVIEW_TEXTS, true)  => 'text',
+        default                                    => 'none',
+    };
 }

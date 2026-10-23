@@ -7,7 +7,8 @@ declare(strict_types=1);
  * ============================================================================
  *
  *  Ajoute « Se connecter avec Vestikan » à un site. Un seul fichier, aucune
- *  dépendance (PHP + curl). Compatible PHP 8.1+.
+ *  dépendance (PHP + curl). Compatible PHP 8.1+, sans avertissement de
+ *  dépréciation jusqu'à PHP 8.5 inclus (Cyla exige PHP 8.5+).
  *
  *  UTILISATION MINIMALE
  *  --------------------
@@ -230,7 +231,9 @@ final class Vestikan
         $status = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
         $errno  = curl_errno($ch);
         $errmsg = curl_error($ch);
-        curl_close($ch);
+        // Pas de curl_close() : sans effet depuis PHP 8.0 et déprécié en PHP 8.5.
+        // La poignée est libérée automatiquement en sortie de portée.
+        unset($ch);
 
         if ($errno !== 0 || $body === false) {
             error_log("[Vestikan SDK] échec réseau /token : $errmsg");
